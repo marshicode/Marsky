@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marsky Design System — Warm Mars</title>
+<meta name="description" content="Style guide for Marsky: one list, two people, zero nagging.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23f97316'/%3E%3Ccircle cx='16' cy='16' r='3.2' fill='%23fff'/%3E%3Cellipse cx='16' cy='16' rx='9.5' ry='4' fill='none' stroke='%23fff' stroke-width='1.6' transform='rotate(-24 16 16)'/%3E%3Ccircle cx='24' cy='11' r='2.2' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+/* ============ DESIGN TOKENS — LIGHT (Warm Mars) ============ */
+:root{
+  --brand:#F97316; --brand-light:#FFB37A; --brand-soft:#FFEDD5; --brand-dark:#C2410C;
+  --bg:#FFF8F2; --card:#FFFFFF; --line:#ECE5DD;
+  --ink:#292524; --ink-soft:#78716C; --ink-faint:#A8A29E;
+  --ok:#16A34A; --warn:#D97706; --danger:#DC2626; --info:#2563EB;
+  --ok-fill:#DCFCE7; --warn-fill:#FEF3C7; --danger-fill:#FEE2E2; --info-fill:#DBEAFE;
+  --overdue-fill:#FFF7F5;
+  --check-border:#D6D3D1;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
+  --shadow-card:0 2px 8px rgba(0,0,0,.04);
+  --shadow-elev:0 10px 30px rgba(234,88,12,.10);
+  --shadow-modal:0 24px 60px rgba(0,0,0,.22);
+  --shadow-toast:0 14px 40px rgba(0,0,0,.30);
+  --font:"Nunito",-apple-system,"SF Pro Rounded","Segoe UI Variable Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"SF Mono","JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+/* ============ DESIGN TOKENS — DARK (Mars night) ============ */
+html[data-theme="dark"]{
+  --brand:#F97316; --brand-light:#FFB37A; --brand-soft:rgba(249,115,22,.14); --brand-dark:#C2410C;
+  --bg:#1C1917; --card:#292524; --card-2:#44403C; --line:#44403C;
+  --ink:#FAFAF9; --ink-soft:#A8A29E; --ink-faint:#78716C;
+  --ok:#4ADE80; --warn:#FBBF24; --danger:#F87171; --info:#60A5FA;
+  --ok-fill:rgba(74,222,128,.14); --warn-fill:rgba(251,191,36,.14);
+  --danger-fill:rgba(248,113,113,.14); --info-fill:rgba(96,165,250,.14);
+  --overdue-fill:rgba(248,113,113,.10);
+  --check-border:#78716C;
+  --shadow-card:0 2px 10px rgba(0,0,0,.35);
+  --shadow-elev:0 12px 36px rgba(0,0,0,.5);
+  --shadow-modal:0 24px 64px rgba(0,0,0,.65);
+  --shadow-toast:0 14px 44px rgba(0,0,0,.6);
+}
+
+/* ============ BASE ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font:inherit;color:inherit}
+a{color:var(--brand-dark)}
+html[data-theme="dark"] a{color:var(--brand-light)}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.hidden{display:none!important}
+
+/* ============ HEADER ============ */
+.sg-header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:12px;padding:12px 20px;background:rgba(255,248,242,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+html[data-theme="dark"] .sg-header{background:rgba(28,25,23,.92)}
+.sg-brand{display:flex;align-items:center;gap:9px;font-weight:900;font-size:17px;color:var(--brand-dark)}
+html[data-theme="dark"] .sg-brand{color:var(--brand-light)}
+.sg-ver{font-size:11px;font-weight:700;letter-spacing:1px;background:var(--brand-soft);color:var(--brand-dark);padding:4px 9px;border-radius:999px;text-transform:uppercase}
+html[data-theme="dark"] .sg-ver{color:var(--brand-light)}
+.sg-header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+
+/* ============ NAV ============ */
+.sg-nav{position:sticky;top:62px;z-index:30;display:flex;gap:8px;overflow-x:auto;padding:10px 20px;background:var(--bg);border-bottom:1px solid var(--line)}
+.sg-nav a{font-size:13px;font-weight:700;color:var(--ink-soft);text-decoration:none;padding:7px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);white-space:nowrap;transition:all .15s}
+.sg-nav a:hover{border-color:var(--brand);color:var(--brand-dark)}
+html[data-theme="dark"] .sg-nav a:hover{color:var(--brand-light)}
+
+/* ============ LAYOUT ============ */
+.sg-main{max-width:1000px;margin:0 auto;padding:34px 20px 80px}
+.sg-section{margin-bottom:64px;scroll-margin-top:120px}
+.sg-section-head{display:flex;align-items:baseline;gap:12px;margin-bottom:22px;padding-bottom:10px;border-bottom:2px solid var(--line)}
+.sg-section-head .sg-num{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--brand)}
+.sg-section-head h2{font-size:22px;font-weight:900;letter-spacing:-.3px}
+.sg-section-head p{margin-left:auto;font-size:13px;color:var(--ink-soft);text-align:right;max-width:46%}
+.sg-sub{margin:34px 0 14px;font-size:15px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:10px}
+.sg-sub::after{content:"";flex:1;height:1px;background:var(--line)}
+.sg-demo{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:24px;margin-bottom:10px}
+.sg-note{font-size:13px;color:var(--ink-soft);line-height:1.55}
+.sg-note code{font-size:12px}
+.sg-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sg-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.sg-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sg-col{display:flex;flex-direction:column;gap:10px}
+
+/* ============ BUTTONS ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:999px;font-weight:700;font-size:15px;transition:transform .06s ease,background .15s ease,border-color .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(249,115,22,.35)}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-primary.pressed{background:var(--brand-dark)}
+.btn-ghost{background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--brand);color:var(--brand-dark)}
+html[data-theme="dark"] .btn-ghost:hover{color:var(--brand-light)}
+.btn-small{padding:6px 12px;font-size:13px}
+.icon-btn{width:38px;height:38px;border-radius:10px;font-size:17px;background:var(--card);border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center}
+.icon-btn:hover{border-color:var(--brand)}
+
+/* ============ AVATARS ============ */
+.avatar{width:34px;height:34px;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;border:2px solid var(--card)}
+.avatar.you{outline:2px solid var(--brand)}
+.avatar.placeholder{background:#d6d3d1;color:#78716C}
+html[data-theme="dark"] .avatar.placeholder{background:var(--card-2);color:var(--ink-faint)}
+.avatar.maya{background:#3B82F6}
+.avatar.alex{background:#A855F7}
+.avatar.mini{width:20px;height:20px;font-size:9px}
+.avatar.sm{width:26px;height:26px;font-size:11px}
+.avatar-stack{display:flex}
+.avatar-stack .avatar+.avatar{margin-left:-10px}
+.member-name{font-size:13px;color:var(--ink-soft);margin-left:8px}
+
+/* ============ PAIR CODE ============ */
+.code-display{font-family:var(--mono);font-size:20px;font-weight:800;letter-spacing:3px;text-align:center;color:var(--brand-dark);background:var(--brand-soft);border-radius:12px;padding:14px;cursor:pointer;user-select:all;border:1.5px dashed transparent;transition:border-color .15s}
+html[data-theme="dark"] .code-display{color:var(--brand-light)}
+.code-display:hover{border-color:var(--brand)}
+
+/* ============ ITEM CARD ============ */
+.item{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:13px 14px;box-shadow:var(--shadow-card);transition:border-color .15s}
+.item:hover{border-color:#f0c9a8}
+html[data-theme="dark"] .item:hover{border-color:var(--brand-soft)}
+.item.completed{opacity:.62}
+.item.due-soon{border-color:#FDBA74}
+.item.overdue{border-color:var(--danger);background:var(--overdue-fill)}
+.item.due-firing{border-color:var(--brand);box-shadow:0 0 0 3px rgba(249,115,22,.18)}
+.item-top{display:flex;align-items:flex-start;gap:10px}
+.check{flex:0 0 auto;width:22px;height:22px;border-radius:7px;border:2px solid var(--check-border);margin-top:1px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:transparent;transition:all .12s;background:#fff}
+html[data-theme="dark"] .check{background:var(--card)}
+.check:hover{border-color:var(--brand)}
+.item.completed .check{background:var(--ok);border-color:var(--ok);color:#fff}
+.item-body{flex:1;min-width:0}
+.item-text{font-size:17px;font-weight:700;line-height:1.35;word-break:break-word}
+.item.completed .item-text{text-decoration:line-through;color:var(--ink-soft)}
+.item-note{font-size:13px;color:var(--ink-soft);margin-top:3px;word-break:break-word}
+.item-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--ink-soft)}
+.item-meta .avatar{width:20px;height:20px;font-size:9px;border:none}
+.due-badge{font-weight:700;padding:3px 9px;border-radius:999px;font-size:11.5px;background:var(--bg);border:1.5px solid var(--line)}
+.due-badge.soon{background:var(--warn-fill);border-color:#FDBA74;color:var(--brand-dark)}
+.due-badge.late{background:var(--danger-fill);border-color:#FCA5A5;color:var(--danger)}
+.due-badge.firing{background:var(--brand);border-color:var(--brand);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(249,115,22,.2)}}
+.tag-recur{font-weight:700;color:#A855F7}
+.completed-by{display:inline-flex;align-items:center;gap:5px;color:var(--ok);font-weight:700}
+.item-actions{display:flex;gap:4px;flex:0 0 auto}
+.mini-btn{width:30px;height:30px;border-radius:8px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-soft);border:1.5px solid transparent}
+.mini-btn:hover{background:var(--bg);border-color:var(--line)}
+.mini-btn.on{color:var(--brand)}
+
+/* ============ LABELS ============ */
+.lbl{font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;border:1.5px solid transparent;cursor:pointer;color:#fff;opacity:.35;transition:opacity .15s}
+.lbl.on{opacity:1}
+.lbl[data-id="0"]{background:#EF4444}.lbl[data-id="1"]{background:#F97316}
+.lbl[data-id="2"]{background:#F59E0B}.lbl[data-id="3"]{background:#22C55E}
+.lbl[data-id="4"]{background:#3B82F6}.lbl[data-id="5"]{background:#A855F7}
+.label-chips{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ============ COMMENTS ============ */
+.comments{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.comment{display:flex;gap:8px;margin-bottom:8px;font-size:13.5px}
+.comment .avatar{width:24px;height:24px;font-size:10px;flex:0 0 auto}
+.comment-bubble{background:var(--bg);border-radius:10px;padding:7px 11px}
+.comment-who{font-weight:800;font-size:12px;margin-right:6px}
+.comment-when{color:var(--ink-faint);font-size:11px}
+.comment-input-row{display:flex;gap:6px;margin-top:4px}
+.comment-input{flex:1;border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;outline:none;background:var(--bg);min-width:0}
+.comment-input:focus{border-color:var(--brand)}
+
+/* ============ ATTACHMENTS ============ */
+.attach-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--brand-dark);text-decoration:none}
+html[data-theme="dark"] .attach-link{color:var(--brand-light)}
+.attach-thumb{border-radius:8px;border:1.5px solid var(--line);margin-top:8px;max-height:60px;display:block}
+
+/* ============ PINNED STRIP ============ */
+.pinned-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px}
+.pin-card{flex:0 0 auto;max-width:230px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px;display:flex;align-items:center;gap:8px}
+.pin-card .pin-dot{color:var(--brand)}
+.pin-card .pin-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ============ COMPOSE ============ */
+.compose{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-elev);padding:14px}
+.compose-row{display:flex;gap:8px;align-items:center}
+.compose-input{flex:1;border:none;outline:none;background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:11px 14px;font-size:15px;min-width:0;transition:border-color .15s}
+.compose-input:focus{border-color:var(--brand);background:var(--card)}
+.compose-details{margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px}
+.field-row{display:flex;gap:14px;flex-wrap:wrap}
+.field-row .field{flex:1;min-width:180px}
+.field input[type="datetime-local"],.field select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);outline:none;font-size:14px;color:var(--ink)}
+.field input:focus,.field select:focus{border-color:var(--brand)}
+.quick-chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.chip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--bg);border:1.5px solid var(--line);color:var(--ink-soft);transition:all .15s}
+.chip:hover{border-color:var(--brand);color:var(--brand-dark)}
+html[data-theme="dark"] .chip:hover{color:var(--brand-light)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-dark)}
+html[data-theme="dark"] .chip.on{color:var(--brand-light)}
+.attach-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.attach-preview{font-size:13px;color:var(--ink-soft)}
+
+/* ============ INVITE BANNER ============ */
+.invite-banner{display:flex;align-items:center;gap:10px;background:var(--brand-soft);border:1.5px dashed var(--brand);color:var(--ink);padding:12px 16px;border-radius:var(--r-lg);font-size:14px;flex-wrap:wrap}
+.invite-banner strong{color:var(--brand-dark);letter-spacing:1px;font-family:var(--mono)}
+html[data-theme="dark"] .invite-banner strong{color:var(--brand-light)}
+.invite-banner .btn{margin-left:auto}
+
+/* ============ EMPTY STATE ============ */
+.empty{text-align:center;padding:48px 20px;color:var(--ink-soft)}
+.empty-emoji{font-size:44px;margin-bottom:10px}
+.empty p{line-height:1.6}
+
+/* ============ MODALS ============ */
+.modal-root{position:fixed;inset:0;z-index:60;background:rgba(41,37,36,.45);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(2px)}
+html[data-theme="dark"] .modal-root{background:rgba(0,0,0,.6)}
+.modal{background:var(--card);border-radius:18px;padding:24px;width:100%;max-width:440px;box-shadow:var(--shadow-modal);animation:pop .16s ease}
+@keyframes pop{from{transform:scale(.96);opacity:0}}
+.modal h2{font-size:20px;margin-bottom:4px;font-weight:900}
+.modal .sub{color:var(--ink-soft);font-size:14px;margin-bottom:16px;line-height:1.5}
+.modal label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.6px}
+.modal input[type="text"]{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;font-size:15px;outline:none;background:var(--bg)}
+.modal input:focus{border-color:var(--brand)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.checkin-item{font-size:17px;font-weight:800;margin:6px 0 2px;word-break:break-word}
+.checkin-due{color:var(--ink-soft);font-size:13px;margin-bottom:16px}
+.checkin-actions{display:flex;gap:10px}
+.checkin-status{margin-top:16px;display:flex;flex-direction:column;gap:8px}
+.checkin-line{display:flex;align-items:center;gap:8px;font-size:14px}
+.checkin-verdict{margin-top:16px;font-size:14px;font-weight:700;text-align:center;color:var(--ok)}
+.checkin-verdict.snooze-line{color:var(--ink-soft);font-weight:600}
+
+/* ============ HISTORY DRAWER ============ */
+.history-panel{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:16px;max-width:440px}
+.history-list{display:flex;flex-direction:column;gap:10px}
+.history-line{display:flex;gap:10px;font-size:13.5px;align-items:flex-start}
+.history-when{color:var(--ink-faint);font-size:11.5px;white-space:nowrap;margin-top:2px}
+
+/* ============ TOASTS ============ */
+.toast-root{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:10px;align-items:center;width:min(420px,calc(100vw - 32px));pointer-events:none}
+.toast{background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 16px;font-size:14px;box-shadow:var(--shadow-toast);display:flex;gap:10px;align-items:center;width:100%;animation:slideup .2s ease;pointer-events:auto}
+.toast .toast-body{flex:1;line-height:1.4}
+.toast .toast-x{color:var(--ink-faint);font-size:15px}
+@keyframes slideup{from{transform:translateY(14px);opacity:0}}
+
+/* ============ COLOR SWATCHES ============ */
+.swatch{border-radius:var(--r-md);border:1.5px solid var(--line);overflow:hidden;background:var(--card)}
+.swatch-color{height:56px}
+.swatch-info{padding:8px 10px;font-size:12px}
+.swatch-name{font-weight:800;font-size:12.5px}
+.swatch-hex{font-family:var(--mono);color:var(--ink-faint);font-size:11px}
+.brand-hero{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-light) 100%);border-radius:var(--r-lg);padding:34px 26px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;box-shadow:var(--shadow-elev)}
+.brand-hero .big{font-size:40px;font-weight:900;letter-spacing:-1px;line-height:1}
+.brand-hero .hex{font-family:var(--mono);font-weight:800;font-size:15px;opacity:.95}
+.ramp{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.ramp-cell{border-radius:10px;padding:10px 8px;color:#fff;font-size:11px;font-family:var(--mono);font-weight:700;display:flex;flex-direction:column;gap:2px}
+.ramp-cell span:last-child{opacity:.85}
+
+/* ============ TYPE SPECIMENS ============ */
+.type-spec{border-left:3px solid var(--line);padding:10px 0 10px 16px;margin-bottom:14px;transition:border-color .15s}
+.type-spec:hover{border-color:var(--brand)}
+.type-spec .label{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);margin-bottom:4px}
+.type-display{font-size:32px;line-height:36px;font-weight:800}
+.type-h1{font-size:24px;line-height:30px;font-weight:800}
+.type-h2{font-size:20px;line-height:26px;font-weight:800}
+.type-title{font-size:17px;line-height:22px;font-weight:700}
+.type-body{font-size:15px;line-height:22px}
+.type-small{font-size:13px;line-height:18px}
+.type-caption{font-size:11.5px;line-height:16px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.type-code{font-family:var(--mono);font-size:20px;line-height:28px;font-weight:800;letter-spacing:3px}
+
+/* ============ SPACING / RADII / SHADOWS ============ */
+.space-bar{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.space-bar .box{background:var(--brand);border-radius:6px;flex:0 0 auto}
+.space-bar .tag{font-family:var(--mono);font-size:12px;color:var(--ink-soft);min-width:52px}
+.radius-row{display:flex;gap:18px;flex-wrap:wrap}
+.radius-sample{width:74px;height:74px;background:var(--brand-soft);border:1.5px solid var(--brand);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--brand-dark)}
+html[data-theme="dark"] .radius-sample{color:var(--brand-light)}
+.shadow-sample{width:150px;height:80px;background:var(--card);border:1.5px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink-soft);text-align:center;padding:6px}
+
+/* ============ CODE BLOCK ============ */
+pre.tokens{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:18px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.7;color:var(--ink)}
+pre.tokens .c{color:var(--ink-faint)}
+
+/* ============ THEME TOGGLE ============ */
+.theme-toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-weight:700;font-size:13px}
+.theme-toggle:hover{border-color:var(--brand)}
+
+/* ============ FOOTER ============ */
+.sg-footer{max-width:1000px;margin:0 auto;padding:26px 20px 50px;border-top:2px solid var(--line);color:var(--ink-soft);font-size:14px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+
+@media (max-width:720px){
+  .sg-grid2,.sg-grid3{grid-template-columns:1fr}
+  .sg-section-head p{display:none}
+  .brand-hero .big{font-size:30px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="sg-header">
+  <div class="sg-brand">
+    <svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true">
+      <circle cx="32" cy="32" r="26" fill="#F97316"/>
+      <circle cx="32" cy="32" r="6.4" fill="#fff"/>
+      <ellipse cx="32" cy="32" rx="19" ry="8" fill="none" stroke="#fff" stroke-width="3" transform="rotate(-24 32 32)"/>
+      <circle cx="48" cy="22" r="4.4" fill="#fff"/>
+    </svg>
+    Marsky
+  </div>
+  <span class="sg-ver">Design System · v1</span>
+  <div class="sg-header-right">
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+      <span id="theme-icon">🌙</span><span id="theme-label">Dark</span>
+    </button>
+  </div>
+</header>
+
+<!-- ============ NAV ============ -->
+<nav class="sg-nav" aria-label="Sections">
+  <a href="#brand">Brand &amp; color</a>
+  <a href="#type">Typography</a>
+  <a href="#space">Spacing &amp; layout</a>
+  <a href="#components">Components</a>
+  <a href="#motion">Motion</a>
+  <a href="#tokens">Tokens</a>
+</nav>
+
+<main class="sg-main">
+
+  <!-- ============ INTRO ============ -->
+  <section class="sg-section" id="intro">
+    <div class="sg-section-head">
+      <span class="sg-num">00</span><h2>Principles</h2>
+    </div>
+    <div class="sg-grid3">
+      <div class="sg-demo"><div class="sg-note"><strong>For two, not for one.</strong> Every screen belongs to both people equally — both avatars always visible, never "your list," always "our list."</div></div>
+      <div class="sg-demo"><div class="sg-note"><strong>Warm, never childish.</strong> Rounded and friendly but adult. Playful moments are reserved for shared wins — both check in "done."</div></div>
+      <div class="sg-demo"><div class="sg-note"><strong>One accent color.</strong> Mars orange is the only hue carrying meaning beyond labels and semantics. If it's not orange, it's warm neutral or semantic.</div></div>
+    </div>
+  </section>
+
+  <!-- ============ BRAND & COLOR ============ -->
+  <section class="sg-section" id="brand">
+    <div class="sg-section-head"><span class="sg-num">01</span><h2>Brand &amp; color</h2></div>
+
+    <div class="sg-sub">The brand color — one color, four working variants</div>
+    <div class="brand-hero">
+      <div>
+        <div class="big">Mars orange</div>
+        <div style="margin-top:6px;font-weight:700;opacity:.95">The only hue that means something.</div>
+      </div>
+      <div class="hex">#F97316</div>
+    </div>
+
+    <div class="sg-grid3" style="margin-top:14px">
+      <div class="swatch"><div class="swatch-color" style="background:#F97316"></div><div class="swatch-info"><div class="swatch-name">--brand</div><div class="swatch-hex">#F97316 · actions, logo, focus, firing</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FFB37A"></div><div class="swatch-info"><div class="swatch-name">--brand-light</div><div class="swatch-hex">#FFB37A · hover fills, glows, illustration</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FFEDD5"></div><div class="swatch-info"><div class="swatch-name">--brand-soft</div><div class="swatch-hex">#FFEDD5 · chips, banners, selected states</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#C2410C"></div><div class="swatch-info"><div class="swatch-name">--brand-dark</div><div class="swatch-hex">#C2410C · pressed, small text on light (AA)</div></div></div>
+    </div>
+
+    <div class="sg-sub">The full ramp</div>
+    <div class="ramp">
+      <div class="ramp-cell" style="background:#FFF7ED;color:#9A3412">50<br><span>#FFF7ED</span></div>
+      <div class="ramp-cell" style="background:#FFEDD5;color:#9A3412">100<br><span>#FFEDD5</span></div>
+      <div class="ramp-cell" style="background:#FED7AA;color:#9A3412">200<br><span>#FED7AA</span></div>
+      <div class="ramp-cell" style="background:#FDBA74;color:#7C2D12">300<br><span>#FDBA74</span></div>
+      <div class="ramp-cell" style="background:#FB923C;color:#7C2D12">400<br><span>#FB923C</span></div>
+      <div class="ramp-cell" style="background:#F97316">500 ★<br><span>#F97316</span></div>
+      <div class="ramp-cell" style="background:#EA580C">600<br><span>#EA580C</span></div>
+      <div class="ramp-cell" style="background:#C2410C">700<br><span>#C2410C</span></div>
+      <div class="ramp-cell" style="background:#9A3412">800<br><span>#9A3412</span></div>
+      <div class="ramp-cell" style="background:#7C2D12">900<br><span>#7C2D12</span></div>
+    </div>
+
+    <div class="sg-sub">Neutrals — warm stone</div>
+    <div class="sg-grid3">
+      <div class="swatch"><div class="swatch-color" style="background:#FFF8F2;border-bottom:1px solid var(--line)"></div><div class="swatch-info"><div class="swatch-name">--bg</div><div class="swatch-hex">#FFF8F2 · app background</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FFFFFF;border-bottom:1px solid var(--line)"></div><div class="swatch-info"><div class="swatch-name">--card</div><div class="swatch-hex">#FFFFFF · cards, modals</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#ECE5DD"></div><div class="swatch-info"><div class="swatch-name">--line</div><div class="swatch-hex">#ECE5DD · borders, dividers</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#292524"></div><div class="swatch-info"><div class="swatch-name">--ink</div><div class="swatch-hex">#292524 · primary text</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#78716C"></div><div class="swatch-info"><div class="swatch-name">--ink-soft</div><div class="swatch-hex">#78716C · secondary text</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#A8A29E"></div><div class="swatch-info"><div class="swatch-name">--ink-faint</div><div class="swatch-hex">#A8A29E · placeholders</div></div></div>
+    </div>
+
+    <div class="sg-sub">Semantic — light &amp; dark pairs (both values shown)</div>
+    <div class="sg-grid3">
+      <div class="swatch"><div class="swatch-color" style="background:#16A34A"></div><div class="swatch-info"><div class="swatch-name">--ok</div><div class="swatch-hex">#16A34A → #4ADE80 · done, both checked in</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#D97706"></div><div class="swatch-info"><div class="swatch-name">--warn</div><div class="swatch-hex">#D97706 → #FBBF24 · soon / snoozed</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#DC2626"></div><div class="swatch-info"><div class="swatch-name">--danger</div><div class="swatch-hex">#DC2626 → #F87171 · overdue, delete</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#2563EB"></div><div class="swatch-info"><div class="swatch-name">--info</div><div class="swatch-hex">#2563EB → #60A5FA · links, mentions</div></div></div>
+    </div>
+
+    <div class="sg-sub">Labels — six fixed (F11)</div>
+    <div class="label-chips" id="label-demo">
+      <span class="lbl on" data-id="0">Chores</span>
+      <span class="lbl on" data-id="1">Plans</span>
+      <span class="lbl" data-id="2">Meals</span>
+      <span class="lbl on" data-id="3">Health</span>
+      <span class="lbl" data-id="4">Study</span>
+      <span class="lbl on" data-id="5">Family</span>
+    </div>
+    <p class="sg-note" style="margin-top:8px">Click a chip to toggle its selected state (selected = full opacity, unselected = 35%).</p>
+  </section>
+
+  <!-- ============ TYPOGRAPHY ============ -->
+  <section class="sg-section" id="type">
+    <div class="sg-section-head"><span class="sg-num">02</span><h2>Typography</h2></div>
+    <p class="sg-note" style="margin-bottom:18px">Nunito (Google Fonts, 400–900) with the fallback stack below; mono accent for codes and timestamps.</p>
+    <div class="sg-demo">
+      <div class="type-spec"><div class="label">display · 32/36 · 800</div><div class="type-display">Marsky</div></div>
+      <div class="type-spec"><div class="label">h1 · 24/30 · 800</div><div class="type-h1">Shared notes</div></div>
+      <div class="type-spec"><div class="label">h2 · 20/26 · 800</div><div class="type-h2">Pay rent — done?</div></div>
+      <div class="type-spec"><div class="label">title · 17/22 · 700</div><div class="type-title">Take out the trash tonight</div></div>
+      <div class="type-spec"><div class="label">body · 15/22 · 400–600</div><div class="type-body">A shared reminder list for two. Pair in seconds, set a time, and it reminds both of you.</div></div>
+      <div class="type-spec"><div class="label">small · 13/18 · 500</div><div class="type-small">Added by Maya · Today 18:30 · 2 comments</div></div>
+      <div class="type-spec"><div class="label">caption · 11.5/16 · 700 · +0.6px · uppercase</div><div class="type-caption">Remind both at</div></div>
+      <div class="type-spec"><div class="label">code · 20/28 · 800 · +3px · mono</div><div class="type-code">M3R5KY</div></div>
+    </div>
+  </section>
+
+  <!-- ============ SPACING & LAYOUT ============ -->
+  <section class="sg-section" id="space">
+    <div class="sg-section-head"><span class="sg-num">03</span><h2>Spacing &amp; layout</h2></div>
+
+    <div class="sg-sub">Spacing scale — 4px grid</div>
+    <div class="sg-demo">
+      <div class="space-bar"><span class="tag">4</span><div class="box" style="width:4px;height:28px"></div></div>
+      <div class="space-bar"><span class="tag">8</span><div class="box" style="width:8px;height:28px"></div></div>
+      <div class="space-bar"><span class="tag">12</span><div class="box" style="width:12px;height:28px"></div></div>
+      <div class="space-bar"><span class="tag">16</span><div class="box" style="width:16px;height:28px"></div></div>
+      <div class="space-bar"><span class="tag">20</span><div class="box" style="width:20px;height:28px"></div></div>
+      <div class="space-bar"><span class="tag">24</span><div class="box" style="width:24px;height:28px"></div></div>
+      <div class="space-bar"><span class="tag">32</span><div class="box" style="width:32px;height:28px"></div></div>
+      <div class="space-bar"><span class="tag">48</span><div class="box" style="width:48px;height:28px"></div></div>
+      <div class="space-bar"><span class="tag">64</span><div class="box" style="width:64px;height:28px"></div></div>
+    </div>
+
+    <div class="sg-sub">Radii</div>
+    <div class="radius-row">
+      <div class="sg-demo" style="margin-bottom:0"><div class="sg-note" style="margin-bottom:12px">sm 8 · inputs, chips</div><div class="radius-sample" style="border-radius:8px">8</div></div>
+      <div class="sg-demo" style="margin-bottom:0"><div class="sg-note" style="margin-bottom:12px">md 12 · pinned cards, toasts</div><div class="radius-sample" style="border-radius:12px">12</div></div>
+      <div class="sg-demo" style="margin-bottom:0"><div class="sg-note" style="margin-bottom:12px">lg 16 · item cards, compose</div><div class="radius-sample" style="border-radius:16px">16</div></div>
+      <div class="sg-demo" style="margin-bottom:0"><div class="sg-note" style="margin-bottom:12px">pill 999 · buttons, badges</div><div class="radius-sample" style="border-radius:999px">999</div></div>
+    </div>
+
+    <div class="sg-sub">Shadows — soft and warm</div>
+    <div class="sg-row">
+      <div class="shadow-sample" style="box-shadow:var(--shadow-card)">card<br>0 2px 8px</div>
+      <div class="shadow-sample" style="box-shadow:var(--shadow-elev)">elevated<br>0 10px 30px</div>
+      <div class="shadow-sample" style="box-shadow:var(--shadow-modal)">modal<br>0 24px 60px</div>
+      <div class="shadow-sample" style="box-shadow:var(--shadow-toast)">toast<br>0 14px 40px</div>
+    </div>
+
+    <div class="sg-sub">Layout rules</div>
+    <p class="sg-note">Content column max-width <strong>720px</strong>, centered · page padding 16px mobile / 24px desktop · header sticky 56–64px, blurred bg, hairline bottom · list rhythm 10px between cards · touch targets ≥ 44×44 mobile, ≥ 36 desktop.</p>
+  </section>
+
+  <!-- ============ COMPONENTS ============ -->
+  <section class="sg-section" id="components">
+    <div class="sg-section-head"><span class="sg-num">04</span><h2>Components</h2></div>
+
+    <!-- Buttons -->
+    <div class="sg-sub">4.1 Buttons — one primary per screen (F1–F5)</div>
+    <div class="sg-demo">
+      <div class="sg-row">
+        <button class="btn btn-primary">Create a pair</button>
+        <button class="btn btn-primary pressed" aria-label="pressed state">Pressed</button>
+        <button class="btn btn-ghost">Join with a code</button>
+        <button class="btn btn-small">+ Link</button>
+        <button class="icon-btn" title="More options">⋯</button>
+        <button class="icon-btn" title="History">🕘</button>
+      </div>
+    </div>
+    <p class="sg-note">Primary = solid <code>--brand</code>, white bold text, soft glow. Hover <code>--brand-dark</code>; pressed scale(.97). Ghost = white card, <code>--line</code> border; hover orange border.</p>
+
+    <!-- Avatars -->
+    <div class="sg-sub">4.2 Avatars — who-did-what (F6)</div>
+    <div class="sg-demo">
+      <div class="sg-row">
+        <span class="avatar you">Yo</span>
+        <span class="avatar maya">Ma</span>
+        <span class="avatar alex">Al</span>
+        <span class="avatar placeholder">+</span>
+        <div class="avatar-stack"><span class="avatar you">Yo</span><span class="avatar maya">Ma</span></div>
+        <span class="avatar maya mini">Ma</span>
+        <span class="avatar alex sm">Al</span>
+        <span class="member-name">You &amp; Maya · the pair is always shown together</span>
+      </div>
+    </div>
+    <p class="sg-note">34px initials circle; <code>.you</code> gets an orange ring. Pair stack overlaps at −10px. Mini 20px in meta rows, 26px in comments/history.</p>
+
+    <!-- Pair code -->
+    <div class="sg-sub">4.3 Pair code — pairing (F1)</div>
+    <div class="sg-demo">
+      <div class="code-display" id="code-display" title="Click to copy">M3R5KY</div>
+    </div>
+    <p class="sg-note">Mono 20/28 800, +3px tracking, <code>--brand-dark</code> on <code>--brand-soft</code>. Click to copy.</p>
+
+    <!-- Item cards -->
+    <div class="sg-sub">4.4 Item cards — all states (F2, F3, F4, F6)</div>
+    <div class="sg-col">
+      <div class="sg-demo" style="margin-bottom:0">
+        <div class="item" id="demo-item-default">
+          <div class="item-top">
+            <button class="check" data-check="demo-item-default" aria-label="Complete">✓</button>
+            <div class="item-body">
+              <div class="item-text">Pay rent</div>
+              <div class="item-note">Landlord: Mr. Okafor — bank transfer</div>
+              <div class="item-meta">
+                <span class="avatar maya mini">Ma</span> <span>Maya added</span>
+                <span class="meta-dot">·</span>
+                <span class="due-badge">Today 18:00</span>
+                <span class="lbl on" data-id="1" style="padding:2px 8px;font-size:11px">Plans</span>
+                <span class="mini-btn on" title="pinned">📌</span>
+              </div>
+            </div>
+            <div class="item-actions">
+              <button class="mini-btn" title="Comments">💬 2</button>
+              <button class="mini-btn on" data-pin="demo-item-default" title="Pin">📌</button>
+              <button class="mini-btn" title="Edit">✎</button>
+              <button class="mini-btn" title="Delete">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sg-demo" style="margin-bottom:0">
+        <div class="item completed" id="demo-item-completed">
+          <div class="item-top">
+            <button class="check" data-check="demo-item-completed" aria-label="Complete">✓</button>
+            <div class="item-body">
+              <div class="item-text">Renew library books</div>
+              <div class="item-meta">
+                <span class="avatar you mini">Yo</span> <span>You added</span>
+                <span class="meta-dot">·</span>
+                <span class="completed-by">✓ done by Maya · 2h ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sg-demo" style="margin-bottom:0">
+        <div class="item due-soon">
+          <div class="item-top">
+            <button class="check">✓</button>
+            <div class="item-body">
+              <div class="item-text">Call the dentist</div>
+              <div class="item-meta">
+                <span class="avatar alex mini">Al</span> <span>Alex added</span>
+                <span class="meta-dot">·</span>
+                <span class="due-badge soon">in 25 min</span>
+                <span class="tag-recur">🔁 weekly</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sg-demo" style="margin-bottom:0">
+        <div class="item overdue">
+          <div class="item-top">
+            <button class="check">✓</button>
+            <div class="item-body">
+              <div class="item-text">Submit apartment application</div>
+              <div class="item-meta">
+                <span class="avatar maya mini">Ma</span> <span>Maya added</span>
+                <span class="meta-dot">·</span>
+                <span class="due-badge late">overdue 3h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sg-demo" style="margin-bottom:0">
+        <div class="item due-firing">
+          <div class="item-top">
+            <button class="check">✓</button>
+            <div class="item-body">
+              <div class="item-text">Take out the trash</div>
+              <div class="item-meta">
+                <span class="avatar you mini">Yo</span> <span>You added</span>
+                <span class="meta-dot">·</span>
+                <span class="due-badge firing">now — done?</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="sg-note" style="margin-top:10px">Click a checkbox to toggle completed. States: default · completed (opacity .62, strikethrough, green check) · soon (60 min, warm border) · overdue (danger border + soft red fill) · firing (orange border, glow ring, pulsing badge until answered).</p>
+
+    <!-- Due badges -->
+    <div class="sg-sub">4.5 Due badges (F4)</div>
+    <div class="sg-demo">
+      <div class="sg-row">
+        <span class="due-badge">Today 18:30</span>
+        <span class="due-badge">Tomorrow 09:00</span>
+        <span class="due-badge soon">in 25 min</span>
+        <span class="due-badge late">overdue 2h</span>
+        <span class="due-badge firing">now — done?</span>
+      </div>
+    </div>
+    <p class="sg-note">Always relative language: "Today 18:30", "Tomorrow", "overdue 2h". Firing badge pulses until both answer.</p>
+
+    <!-- Recurring -->
+    <div class="sg-sub">4.6 Recurring tag (F8)</div>
+    <div class="sg-demo">
+      <div class="sg-row">
+        <span class="tag-recur">🔁 daily</span>
+        <span class="tag-recur">🔁 weekly</span>
+        <span class="sg-note">Purple glyph + cadence; shown in the meta row.</span>
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="sg-sub">4.7 Comments — per-item thread (F9)</div>
+    <div class="sg-demo">
+      <div class="item" style="box-shadow:none">
+        <div class="item-top">
+          <button class="check">✓</button>
+          <div class="item-body">
+            <div class="item-text">Buy groceries</div>
+            <div class="item-meta"><span class="avatar maya mini">Ma</span> <span>Maya added</span></div>
+            <div class="comments">
+              <div class="comment">
+                <span class="avatar you sm">Yo</span>
+                <div class="comment-bubble"><span class="comment-who">You</span><span class="comment-when">10:42</span><br>Got the milk, need eggs too</div>
+              </div>
+              <div class="comment">
+                <span class="avatar maya sm">Ma</span>
+                <div class="comment-bubble"><span class="comment-who">Maya</span><span class="comment-when">10:48</span><br>Adding eggs to the list 👍</div>
+              </div>
+              <div class="comment-input-row">
+                <input type="text" class="comment-input" id="comment-input" placeholder="Reply…" maxlength="300">
+                <button class="icon-btn" id="comment-send" title="Send" style="width:36px;height:36px">➤</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attachments -->
+    <div class="sg-sub">4.8 Attachments &amp; links (F10)</div>
+    <div class="sg-demo">
+      <div class="item" style="box-shadow:none">
+        <div class="item-top">
+          <button class="check">✓</button>
+          <div class="item-body">
+            <div class="item-text">Sign lease amendment</div>
+            <img class="attach-thumb" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Crect width='120' height='60' rx='8' fill='%23FFEDD5'/%3E%3Ctext x='10' y='36' font-family='sans-serif' font-size='13' font-weight='700' fill='%23C2410C'%3Elease.pdf%3C/text%3E%3C/svg%3E" alt="lease.pdf thumbnail">
+            <div class="item-meta" style="margin-top:6px">
+              <a class="attach-link" href="#" onclick="return false">🔗 landlord-form.pdf</a>
+              <a class="attach-link" href="#" onclick="return false">📷 receipt.jpg</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pin & pinned strip -->
+    <div class="sg-sub">4.9 Pin &amp; pinned strip (F12)</div>
+    <div class="sg-demo">
+      <div class="pinned-strip">
+        <div class="pin-card"><span class="pin-dot">📌</span><span class="pin-text">Pay rent — Today 18:00</span></div>
+        <div class="pin-card"><span class="pin-dot">📌</span><span class="pin-text">Visa appointment Friday</span></div>
+        <div class="pin-card"><span class="pin-dot">📌</span><span class="pin-text">Water plants before trip</span></div>
+      </div>
+    </div>
+    <p class="sg-note">Star any item; pinned items surface in this horizontal strip above the list. Star in the item card above toggles (demo only).</p>
+
+    <!-- Compose -->
+    <div class="sg-sub">4.10 Compose bar — add note (F3)</div>
+    <div class="sg-demo">
+      <div class="compose">
+        <div class="compose-row">
+          <input type="text" class="compose-input" placeholder="Add a shared note… e.g. “pay rent”, “buy milk”, “finish essay”" maxlength="200">
+          <button class="btn btn-primary">Add</button>
+          <button class="icon-btn" title="More options">⋯</button>
+        </div>
+        <div class="compose-details">
+          <div class="field-row">
+            <div class="field">
+              <label>Remind both at</label>
+              <input type="datetime-local" value="2026-08-17T18:00">
+              <div class="quick-chips">
+                <span class="chip on">+1 min</span>
+                <span class="chip">+30 min</span>
+                <span class="chip">+2 h</span>
+                <span class="chip">tomorrow</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Repeat</label>
+              <select><option>Never</option><option>Daily</option><option>Weekly</option></select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Labels</label>
+            <div class="label-chips">
+              <span class="lbl on" data-id="0">Chores</span><span class="lbl" data-id="1">Plans</span>
+              <span class="lbl" data-id="2">Meals</span><span class="lbl" data-id="3">Health</span>
+              <span class="lbl" data-id="4">Study</span><span class="lbl on" data-id="5">Family</span>
+            </div>
+          </div>
+          <div class="field">
+            <label>Note / attachment</label>
+            <input type="text" class="compose-input" placeholder="Extra note (optional)" maxlength="500">
+            <div class="attach-row">
+              <button class="btn btn-small">+ Link</button>
+              <button class="btn btn-small">+ File</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invite banner -->
+    <div class="sg-sub">4.11 Invite banner (F1)</div>
+    <div class="sg-demo">
+      <div class="invite-banner">
+        <span>Your pair code is <strong>M3R5KY</strong> — share it so your partner can join.</span>
+        <button class="btn btn-small" data-copy="M3R5KY">Copy</button>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div class="sg-sub">4.12 Empty state (F2)</div>
+    <div class="sg-demo">
+      <div class="empty">
+        <div class="empty-emoji">🌱</div>
+        <p>No notes yet. Add your first shared note above —<br>it’ll appear for both of you instantly.</p>
+        <button class="btn btn-ghost" style="margin-top:14px">Add your first note</button>
+      </div>
+    </div>
+
+    <!-- Check-in modal -->
+    <div class="sg-sub">4.13 Check-in modal — the magic moment (F5)</div>
+    <div class="sg-demo">
+      <button class="btn btn-primary" id="btn-open-checkin">⏰ Open “done?” check-in</button>
+      <button class="btn btn-ghost" id="btn-open-modal">Open generic modal</button>
+      <p class="sg-note" style="margin-top:10px">Live demo: answer “Done ✅” or “Not yet”, then simulate your partner's answer. Both done → celebration.</p>
+    </div>
+
+    <!-- History -->
+    <div class="sg-sub">4.14 Activity history (F7)</div>
+    <div class="sg-demo">
+      <div class="history-panel" style="border:none;padding:0">
+        <div class="history-list">
+          <div class="history-line"><span class="avatar maya sm">Ma</span><div><span style="font-weight:800">Maya</span> completed <span style="font-weight:800">“Renew library books”</span><div class="history-when">2h ago</div></div></div>
+          <div class="history-line"><span class="avatar you sm">Yo</span><div><span style="font-weight:800">You</span> added <span style="font-weight:800">“Take out the trash”</span> · today 18:00<div class="history-when">4h ago</div></div></div>
+          <div class="history-line"><span class="avatar maya sm">Ma</span><div><span style="font-weight:800">Maya</span> commented on <span style="font-weight:800">“Buy groceries”</span> — “Adding eggs 👍”<div class="history-when">yesterday</div></div></div>
+          <div class="history-line"><span class="avatar you sm">Yo</span><div><span style="font-weight:800">You</span> rescheduled <span style="font-weight:800">“Call the dentist”</span> 🔁 weekly<div class="history-when">yesterday</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toasts -->
+    <div class="sg-sub">4.15 Toasts (F4, F14)</div>
+    <div class="sg-demo">
+      <div class="sg-row">
+        <button class="btn btn-primary" id="btn-toast-reminder">Show reminder toast</button>
+        <button class="btn btn-ghost" id="btn-toast-confirm">Show confirmation toast</button>
+        <button class="btn btn-ghost" id="btn-toast-celebrate">Show celebration 🎉</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MOTION ============ -->
+  <section class="sg-section" id="motion">
+    <div class="sg-section-head"><span class="sg-num">05</span><h2>Motion</h2></div>
+    <div class="sg-grid2">
+      <div class="sg-demo">
+        <div class="sg-note" style="margin-bottom:12px"><strong>Reminder firing</strong> — badge pulses (1.2s ring) until answered.</div>
+        <span class="due-badge firing">now — done?</span>
+      </div>
+      <div class="sg-demo">
+        <div class="sg-note" style="margin-bottom:12px"><strong>Modal</strong> — pop-in scale(.96→1) 160ms · <strong>Toast</strong> — slide-up 200ms (see 4.15).</div>
+        <div class="sg-row">
+          <button class="btn btn-small" id="btn-open-checkin2">Pop modal</button>
+          <button class="btn btn-small" id="btn-toast-confirm2">Slide toast</button>
+        </div>
+      </div>
+    </div>
+    <p class="sg-note">Default curve <code>cubic-bezier(.2,.8,.2,1)</code>, 120–200ms. <code>prefers-reduced-motion</code>: disable pulse/glow, keep 150ms fades. Check-in celebration: badge pulses once, toast slides, card fades to completed 200ms.</p>
+  </section>
+
+  <!-- ============ TOKENS ============ -->
+  <section class="sg-section" id="tokens">
+    <div class="sg-section-head"><span class="sg-num">06</span><h2>Implementation tokens</h2></div>
+    <pre class="tokens"><span class="c">/* Light — Warm Mars */</span>
+:root {
+  --brand: #F97316;  --brand-light: #FFB37A;
+  --brand-soft: #FFEDD5;  --brand-dark: #C2410C;
+  --bg: #FFF8F2;  --card: #FFFFFF;  --line: #ECE5DD;
+  --ink: #292524; --ink-soft: #78716C; --ink-faint: #A8A29E;
+  --ok: #16A34A; --warn: #D97706; --danger: #DC2626; --info: #2563EB;
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-pill: 999px;
+  --shadow-card: 0 2px 8px rgba(0,0,0,.04);
+  --shadow-elev: 0 10px 30px rgba(234,88,12,.10);
+  --shadow-modal: 0 24px 60px rgba(0,0,0,.22);
+  --font: "Nunito", -apple-system, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+}
+<span class="c">/* Dark — Mars night */</span>
+html[data-theme="dark"] {
+  --bg: #1C1917;  --card: #292524;  --card-2: #44403C;  --line: #44403C;
+  --ink: #FAFAF9; --ink-soft: #A8A29E; --ink-faint: #78716C;
+  --brand-soft: rgba(249,115,22,.14);
+  --ok: #4ADE80; --warn: #FBBF24; --danger: #F87171; --info: #60A5FA;
+  --shadow-card: 0 2px 10px rgba(0,0,0,.35);
+  --shadow-elev: 0 12px 36px rgba(0,0,0,.5);
+}</pre>
+  </section>
+</main>
+
+<!-- ============ MODALS ============ -->
+<div id="modal-root" class="modal-root hidden">
+  <div class="modal" id="modal-box" role="dialog" aria-modal="true"></div>
+</div>
+
+<div id="toast-root" class="toast-root"></div>
+
+<footer class="sg-footer">
+  <svg viewBox="0 0 64 64" width="20" height="20" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="#F97316"/><circle cx="32" cy="32" r="6.4" fill="#fff"/><ellipse cx="32" cy="32" rx="19" ry="8" fill="none" stroke="#fff" stroke-width="3" transform="rotate(-24 32 32)"/><circle cx="48" cy="22" r="4.4" fill="#fff"/></svg>
+  <span>Marsky — one list, two people, zero nagging. · Warm Mars v1 · light &amp; dark</span>
+</footer>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var toggle = document.getElementById('theme-toggle');
+  var tIcon = document.getElementById('theme-icon');
+  var tLabel = document.getElementById('theme-label');
+  function setTheme(dark){
+    if(dark){ root.setAttribute('data-theme','dark'); tIcon.textContent='☀️'; tLabel.textContent='Light'; }
+    else { root.removeAttribute('data-theme'); tIcon.textContent='🌙'; tLabel.textContent='Dark'; }
+  }
+  toggle.addEventListener('click', function(){ setTheme(!root.hasAttribute('data-theme')); });
+  if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme(true);
+
+  /* ---- toasts ---- */
+  var toastRoot = document.getElementById('toast-root');
+  function toast(html, ms){
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = '<div class="toast-body">'+html+'</div><button class="toast-x" aria-label="Dismiss">✕</button>';
+    el.querySelector('.toast-x').addEventListener('click', function(){ el.remove(); });
+    toastRoot.appendChild(el);
+    setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(function(){ el.remove(); }, 320); }, ms || 6000);
+  }
+  document.getElementById('btn-toast-reminder').addEventListener('click', function(){
+    toast('⏰ <strong>“Pay rent”</strong> — done? <button class="btn btn-small" style="color:#fff;border:1px solid rgba(255,255,255,.5)">Done</button> <button class="btn btn-small" style="color:#fff;border:1px solid rgba(255,255,255,.5)">Not yet</button>', 8000);
+  });
+  document.getElementById('btn-toast-confirm').addEventListener('click', function(){ toast('✓ Saved — it’ll remind you both at 18:00', 3500); });
+  document.getElementById('btn-toast-celebrate').addEventListener('click', function(){ toast('🎉 <strong>You both did it!</strong> “Pay rent” is done.', 5000); });
+  document.getElementById('btn-toast-confirm2').addEventListener('click', function(){ toast('✓ Toast demo', 3000); });
+
+  /* ---- copy code ---- */
+  var codeEl = document.getElementById('code-display');
+  function copyCode(){
+    var t = codeEl.textContent.trim();
+    var done = function(){ toast('✓ Pair code <strong>'+t+'</strong> copied'); };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done).catch(done); }
+    else { done(); }
+  }
+  codeEl.addEventListener('click', copyCode);
+  document.querySelectorAll('[data-copy]').forEach(function(b){ b.addEventListener('click', function(){
+    var t = b.getAttribute('data-copy');
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t); }
+    toast('✓ Pair code <strong>'+t+'</strong> copied');
+  });});
+
+  /* ---- checkboxes (demo) ---- */
+  document.querySelectorAll('[data-check]').forEach(function(c){
+    c.addEventListener('click', function(){
+      var item = document.getElementById(c.getAttribute('data-check'));
+      item.classList.toggle('completed');
+    });
+  });
+
+  /* ---- pins (demo) ---- */
+  document.querySelectorAll('[data-pin]').forEach(function(p){
+    p.addEventListener('click', function(){ p.classList.toggle('on'); });
+  });
+
+  /* ---- label chips (demo) ---- */
+  document.querySelectorAll('.lbl').forEach(function(l){
+    l.addEventListener('click', function(){ l.classList.toggle('on'); });
+  });
+
+  /* ---- comment demo ---- */
+  var cInput = document.getElementById('comment-input');
+  var cSend = document.getElementById('comment-send');
+  function addComment(){
+    var v = (cInput.value||'').trim(); if(!v) return;
+    var comments = cInput.closest('.comments');
+    var row = cInput.closest('.comment-input-row');
+    var div = document.createElement('div'); div.className='comment';
+    div.innerHTML = '<span class="avatar you sm">Yo</span><div class="comment-bubble"><span class="comment-who">You</span><span class="comment-when">now</span><br>'+v.replace(/</g,'&lt;')+'</div>';
+    comments.insertBefore(div, row);
+    cInput.value=''; toast('✓ Comment added');
+  }
+  cSend.addEventListener('click', addComment);
+  cInput.addEventListener('keydown', function(e){ if(e.key==='Enter') addComment(); });
+
+  /* ---- modal helpers ---- */
+  var modalRoot = document.getElementById('modal-root');
+  var modalBox = document.getElementById('modal-box');
+  function openModal(html){
+    modalBox.innerHTML = html;
+    modalRoot.classList.remove('hidden');
+    var f = modalBox.querySelector('input'); if(f) setTimeout(function(){ f.focus(); }, 60);
+  }
+  function closeModal(){ modalRoot.classList.add('hidden'); }
+  modalRoot.addEventListener('click', function(e){ if(e.target===modalRoot) closeModal(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+
+  /* ---- check-in state machine ---- */
+  var ci = { you:null, maya:null };
+  function renderCheckin(){
+    var youLine = ci.you===null ? '<span style="color:var(--ink-faint)">Waiting for you…</span>'
+      : ci.you==='yes' ? 'You said done ✅' : 'You said not yet 😅';
+    var mayaLine = ci.maya===null ? '<span style="color:var(--ink-faint)">Waiting for Maya…</span>'
+      : ci.maya==='yes' ? 'Maya said done ✅' : 'Maya said not yet 😅';
+    var verdict = '';
+    var actions = '';
+    if(ci.you!==null && ci.maya!==null){
+      if(ci.you==='yes' && ci.maya==='yes'){
+        verdict = '<div class="checkin-verdict" style="font-size:16px">🎉 You both did it — “Pay rent” is done!</div>';
+      } else {
+        verdict = '<div class="checkin-verdict snooze-line">One of you isn’t done yet.<br><button class="btn btn-ghost btn-small" style="margin-top:10px" onclick="window.__ciSnooze()">Snooze +30 min</button></div>';
+      }
+    } else {
+      actions = '<div class="checkin-actions">'
+        + '<button class="btn btn-primary" onclick="window.__ciAnswer(\'yes\')">Done ✅</button>'
+        + '<button class="btn btn-ghost" onclick="window.__ciAnswer(\'no\')">Not yet</button>'
+        + '</div>'
+        + '<button class="btn btn-ghost btn-small" style="margin-top:10px" onclick="window.__ciSimulate()">Simulate Maya’s answer</button>';
+    }
+    openModal('<h2>⏰ “Pay rent” — done?</h2>'
+      + '<div class="checkin-due">Reminded you both · Today 18:00</div>'
+      + '<div class="checkin-status">'
+      +   '<div class="checkin-line"><span class="avatar you sm">Yo</span>'+youLine+'</div>'
+      +   '<div class="checkin-line"><span class="avatar maya sm">Ma</span>'+mayaLine+'</div>'
+      + '</div>'+actions+verdict
+      + '<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>');
+  }
+  window.__ciAnswer = function(a){ ci.you = a; renderCheckin(); };
+  window.__ciSimulate = function(){ ci.maya = (ci.you==='yes') ? 'yes' : (Math.random()<0.5?'yes':'no'); renderCheckin(); };
+  window.__ciSnooze = function(){ ci.you=null; ci.maya=null; toast('⏰ Snoozed — “Pay rent” will remind you both again at 18:30', 4000); closeModal(); };
+  document.getElementById('btn-open-checkin').addEventListener('click', function(){ ci.you=null; ci.maya=null; renderCheckin(); });
+  document.getElementById('btn-open-checkin2').addEventListener('click', function(){ ci.you=null; ci.maya=null; renderCheckin(); });
+
+  /* ---- generic modal ---- */
+  document.getElementById('btn-open-modal').addEventListener('click', function(){
+    openModal('<h2>Delete note?</h2><div class="sub">This removes “Call the dentist” from your shared list for both of you.</div>'
+      + '<div class="modal-actions">'
+      + '<button class="btn btn-ghost" onclick="closeModal()">Cancel</button>'
+      + '<button class="btn btn-primary" style="background:var(--danger)" onclick="closeModal();toast(\'🗑 Deleted for both of you\')">Delete</button>'
+      + '</div>');
+  });
+})();
+</script>
+</body>
+</html>

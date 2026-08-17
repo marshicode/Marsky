@@ -1,0 +1,10 @@
+# Local agent / preview artifacts
+.freebuff/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/

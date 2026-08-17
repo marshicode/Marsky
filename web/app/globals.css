@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* DESIGN.md §7 — dark mode activates via data-theme on <html> (follows
+   prefers-color-scheme; no manual toggle in v1). */
+@custom-variant dark (&:where(html[data-theme="dark"], html[data-theme="dark"] *));
+
+/* ---------- DESIGN.md §2/§3 — Warm Mars tokens (light) ---------- */
+:root {
+  --brand: #f97316;
+  --brand-light: #ffb37a;
+  --brand-soft: #ffedd5;
+  --brand-dark: #c2410c;
+  --bg: #fff8f2;
+  --card: #ffffff;
+  --line: #ece5dd;
+  --ink: #292524;
+  --ink-soft: #78716c;
+  --ink-faint: #a8a29e;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --info: #2563eb;
+  --ok-fill: #dcfce7;
+  --warn-fill: #fef3c7;
+  --danger-fill: #fee2e2;
+  --overdue-fill: #fff7f5;
+  --check-border: #d6d3d1;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-elev: 0 10px 30px rgba(234, 88, 12, 0.1);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.22);
+  --shadow-toast: 0 14px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* ---------- DESIGN.md §7 — Mars night ---------- */
+html[data-theme="dark"] {
+  --bg: #1c1917;
+  --card: #292524;
+  --card-2: #44403c;
+  --line: #44403c;
+  --ink: #fafaf9;
+  --ink-soft: #a8a29e;
+  --ink-faint: #78716c;
+  --brand-soft: rgba(249, 115, 22, 0.14);
+  --ok: #4ade80;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  --info: #60a5fa;
+  --ok-fill: rgba(74, 222, 128, 0.14);
+  --warn-fill: rgba(251, 191, 36, 0.14);
+  --danger-fill: rgba(248, 113, 113, 0.14);
+  --overdue-fill: rgba(248, 113, 113, 0.1);
+  --check-border: #78716c;
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-elev: 0 12px 36px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.65);
+  --shadow-toast: 0 14px 44px rgba(0, 0, 0, 0.6);
+}
+
+/* Map tokens into Tailwind utilities (bg-brand, text-ink-soft, …).
+   Values reference the CSS variables, so utilities flip with the theme. */
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-light: var(--brand-light);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-dark: var(--brand-dark);
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  --font-sans: var(--font-nunito), -apple-system, "SF Pro Rounded",
+    "Segoe UI Variable Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
+    monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
