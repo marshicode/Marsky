@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import * as store from "@/lib/pair-store";
 import { getActiveCode, getActivePair, getUser, getVersion, subscribe } from "@/lib/pair-store";
 import type { Item, Member } from "@/lib/types";
-import { initials } from "@/lib/format";
+import { initials, timeAgo } from "@/lib/format";
 import {
   Bell,
   Check,
+  CheckCheck,
   Clock,
   Copy,
   History,
+  MessageCircle,
   PartyPopper,
+  Pencil,
   Pin,
   Plus,
+  Repeat,
+  RotateCcw,
   Sprout,
   Trash2,
   UserPlus,
@@ -40,9 +45,11 @@ export default function PairListPage() {
   const user = getUser();
   const pair = getActivePair();
   const code = getActiveCode();
+  const unread = store.getUnreadCount();
 
   const [modal, setModal] = useState<ModalState>(null);
   const [editing, setEditing] = useState<Item | null>(null);
+  const [notifsOpen, setNotifsOpen] = useState(false);
   // Hydration gate: the server prerenders this page empty (no localStorage),
   // so the client must agree on that first render — otherwise React logs a
   // hydration mismatch every time a returning user loads /app. After the
@@ -111,6 +118,29 @@ export default function PairListPage() {
     }
     prevMembers.current = pair.members.length;
   }, [pair, user?.id]);
+
+  /* Partner activity: when the other device adds, comments on, completes,
+     edits, or deletes something, toast it and (if allowed) notify the OS.
+     Joins are covered by the member-count effect above. */
+  useEffect(() => {
+    return store.subscribePartnerEvents((events) => {
+      for (const ev of events) {
+        if (ev.kind === "joined") continue;
+        const { icon, text } = partnerEventCopy(ev);
+        toast(
+          <span className="inline-flex items-center gap-2">
+            <span className="shrink-0 text-brand" aria-hidden="true">
+              {icon}
+            </span>
+            {text}
+          </span>
+        );
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification("Marsky", { body: text, icon: "/icon.svg" });
+        }
+      }
+    });
+  }, []);
 
   if (!mounted || !user || !pair || !code) return null; // redirecting (or pre-hydration)
 
@@ -201,24 +231,30 @@ export default function PairListPage() {
     );
   };
 
-  const enableNotifications = () => {
+  const openNotifications = () => {
+    store.clearUnread(); // viewing marks everything as read
+    setNotifsOpen((o) => !o);
+    // Ask once for OS-level notifications only while the choice is open;
+    // granted/denied states skip the prompt and just open the panel.
     if (typeof Notification === "undefined") {
-      toast("This browser doesn’t support notifications");
-      return;
+      toast("This browser doesn’t support OS notifications — they’ll show here instead");
+    } else if (Notification.permission === "default") {
+      Notification.requestPermission().then((p) => {
+        toast(
+          <span className="inline-flex items-center gap-2">
+            <Bell className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {p === "granted"
+              ? "Notifications on — reminders and partner updates reach you even in another tab"
+              : p === "denied"
+                ? "Notifications blocked in this browser — updates still show here"
+                : "Notifications stay off — updates still show here"}
+          </span>
+        );
+      });
     }
-    Notification.requestPermission().then((p) => {
-      toast(
-        <span className="inline-flex items-center gap-2">
-          <Bell className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {p === "granted"
-            ? "Notifications on — reminders reach you even in another tab"
-            : p === "denied"
-              ? "Notifications blocked in this browser"
-              : "Notifications stay off until you allow them"}
-        </span>
-      );
-    });
   };
+
+  const recent = store.getRecentEvents();
 
   const simulatePartner = () => {
     const api = (window as unknown as Record<string, unknown>).__marskyDemo as
@@ -264,14 +300,62 @@ export default function PairListPage() {
           {code}
         </button>
         <div className="ml-auto flex items-center gap-2">
-          <button
-            className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border-[1.5px] border-line bg-card text-ink-soft hover:border-brand hover:text-brand-dark dark:hover:text-brand-light"
-            onClick={enableNotifications}
-            title="Enable browser notifications"
-            aria-label="Enable notifications"
-          >
-            <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
-          </button>
+          <div className="relative">
+            <button
+              className="relative flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border-[1.5px] border-line bg-card text-ink-soft hover:border-brand hover:text-brand-dark dark:hover:text-brand-light"
+              onClick={openNotifications}
+              title={
+                unread > 0
+                  ? `${unread} unread update${unread === 1 ? "" : "s"} from your partner`
+                  : "Notifications & partner activity"
+              }
+              aria-label="Notifications"
+              aria-expanded={notifsOpen}
+            >
+              <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
+              {unread > 0 && (
+                <span
+                  className="pointer-events-none absolute -right-1.5 -top-1.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-extrabold leading-none text-white"
+                  aria-label={`${unread} unread updates`}
+                >
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </button>
+            {notifsOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setNotifsOpen(false)} aria-hidden="true" />
+                <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-[300px] overflow-hidden rounded-[14px] border-[1.5px] border-line bg-card shadow-toast">
+                  <div className="border-b border-line px-4 py-2.5 text-[12px] font-extrabold uppercase tracking-[.6px] text-ink-soft">
+                    Partner activity
+                  </div>
+                  <div className="max-h-[280px] overflow-y-auto py-1">
+                    {recent.length === 0 ? (
+                      <p className="px-4 py-4 text-[13px] leading-[1.5] text-ink-soft">
+                        Nothing yet — when your partner adds, comments, or edits a note, it
+                        shows up here.
+                      </p>
+                    ) : (
+                      recent.map((r, i) => {
+                        const { icon, text } = partnerEventCopy(r.event);
+                        return (
+                          <div key={i} className="flex items-start gap-2.5 px-4 py-2">
+                            <span className="mt-0.5 shrink-0 text-brand" aria-hidden="true">
+                              {icon}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-[13px] leading-[1.45]">{text}</p>
+                              <p className="mt-0.5 text-[11px] text-ink-faint">{timeAgo(r.at)}</p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button
             className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border-[1.5px] border-line bg-card text-ink-soft hover:border-brand hover:text-brand-dark dark:hover:text-brand-light"
             onClick={() => setModal({ kind: "history" })}
@@ -436,4 +520,70 @@ function useHydrated(): boolean {
     () => true,
     () => false
   );
+}
+
+/** Icon + copy for a partner-activity event. */
+function partnerEventCopy(ev: {
+  kind: string;
+  actorName: string;
+  detail: string;
+}): { icon: ReactNode; text: string } {
+  const iconSize = "h-4 w-4";
+  switch (ev.kind) {
+    case "added":
+      return {
+        icon: <Plus className={iconSize} />,
+        text: `${ev.actorName} added ${ev.detail}`,
+      };
+    case "comment":
+      return {
+        icon: <MessageCircle className={iconSize} />,
+        text: `${ev.actorName} commented ${ev.detail}`,
+      };
+    case "joined":
+      return {
+        icon: <UserPlus className={iconSize} />,
+        text: `${ev.actorName} joined the pair`,
+      };
+    case "completed":
+      return {
+        icon: <Check className={iconSize} />,
+        text: `${ev.actorName} completed ${ev.detail}`,
+      };
+    case "deleted":
+      return {
+        icon: <Trash2 className={iconSize} />,
+        text: `${ev.actorName} deleted ${ev.detail}`,
+      };
+    case "edited":
+      return {
+        icon: <Pencil className={iconSize} />,
+        text: `${ev.actorName} edited ${ev.detail}`,
+      };
+    case "reopened":
+      return {
+        icon: <RotateCcw className={iconSize} />,
+        text: `${ev.actorName} reopened ${ev.detail}`,
+      };
+    case "snoozed":
+      return {
+        icon: <Clock className={iconSize} />,
+        text: `${ev.actorName} snoozed ${ev.detail}`,
+      };
+    case "rescheduled":
+      return {
+        icon: <Repeat className={iconSize} />,
+        text: `${ev.actorName} rescheduled ${ev.detail}`,
+      };
+    case "checkin":
+      return {
+        icon: <CheckCheck className={iconSize} />,
+        text: `${ev.actorName} checked in ${ev.detail}`,
+      };
+    default:
+      return {
+        icon: <Bell className={iconSize} />,
+        text: `${ev.actorName} updated ${ev.detail}`,
+      };
+  }
 }

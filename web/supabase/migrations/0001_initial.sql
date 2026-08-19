@@ -110,10 +110,15 @@ create policy "pairs insert" on public.pairs
 -- pair_members: read own + pair's members; insert yourself while a seat is free.
 create policy "pm select member" on public.pair_members
   for select using (user_id = auth.uid() or public.is_member(pair_code));
+-- NOTE: the count subquery must qualify the NEW row as pair_members.pair_code
+-- (the table name refers to the row being inserted). An unqualified pair_code
+-- resolves to pm.pair_code (always-true join), which counts every membership
+-- row visible to the caller across ALL pairs — so anyone in a 2-member pair
+-- could never create or join again.
 create policy "pm insert self" on public.pair_members
   for insert with check (
     user_id = auth.uid() and
-    (select count(*) from public.pair_members pm where pm.pair_code = pair_code) < 2
+    (select count(*) from public.pair_members pm where pm.pair_code = pair_members.pair_code) < 2
   );
 
 -- items & history: members only, full CRUD (both members are equals).

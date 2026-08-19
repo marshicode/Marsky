@@ -20,6 +20,7 @@ import { generateCode, pickColor, uid, uuid } from "./format";
 import {
   dbCreatePair,
   dbDeleteItem,
+  dbEnsureMember,
   dbFetchPair,
   dbFireReminders,
   dbInsertItem,
@@ -249,8 +250,29 @@ async function doInit(): Promise<void> {
   if (!code || !local) return;
   const fetched = await dbFetchPair(code);
   if (fetched.ok) {
-    adoptDbPair(fetched.pair);
-    watchPair(code);
+    if (fetched.pair.members.some((m) => m.id === id)) {
+      // Boot baseline: whatever is in the DB at boot is the known state, so
+      // only changes AFTER boot notify.
+      lastDbHistory = new Set(fetched.pair.history.map((h) => h.id));
+      adoptDbPair(fetched.pair);
+      watchPair(code);
+    } else {
+      // Broken seed: the pair row exists but the creator's membership never
+      // landed (e.g. an RLS hiccup at create time). Re-insert the creator's
+      // membership and refetch — self-heals once the policy allows it.
+      const me = state.user ?? { id, name: "Me", color: pickColor(0) };
+      const fixed = await dbEnsureMember(code, me);
+      if (fixed.ok) {
+        const again = await dbFetchPair(code);
+        if (again.ok && again.pair.members.some((m) => m.id === id)) {
+          lastDbHistory = new Set(again.pair.history.map((h) => h.id));
+          adoptDbPair(again.pair);
+          watchPair(code);
+          return;
+        }
+      }
+      handleDbErr(fixed.error);
+    }
   } else if (fetched.error instanceof Error && fetched.error.message === "pair not found") {
     // Local pair predates the Supabase wiring — migrate it up (re-keying
     // local member ids to the anon uuid).
@@ -307,20 +329,29 @@ async function uploadPair(code: string, anon: string) {
   for (const h of pair.history.slice(0, -1)) {
     await dbPushHistory(code, h).then(handleWriteErr);
   }
+  lastDbHistory = null; // freshly migrated pair: baseline on first fetch
   watchPair(code);
 }
 
-/** Realtime watcher for the active pair (debounced refresh). */
+/** Realtime watcher for the active pair (debounced refresh), plus a polling
+ *  fallback. Postgres realtime only fires once the tables are added to the
+ *  `supabase_realtime` publication; until then (or on any realtime hiccup)
+ *  the poll keeps the pair live across devices — a comment, a join, or any
+ *  item change shows up within a few seconds either way. */
 let unwatch: (() => void) | null = null;
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 function watchPair(code: string) {
   if (!dbAvailable) return;
   unwatch?.();
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = null;
   unwatch = subscribeRealtime(code, () => {
     if (refreshTimer) clearTimeout(refreshTimer);
     refreshTimer = setTimeout(() => void refreshFromDb(code), 400);
   });
+  pollTimer = setInterval(() => void refreshFromDb(code), 8000);
 }
 
 async function refreshFromDb(code: string) {
@@ -330,7 +361,131 @@ async function refreshFromDb(code: string) {
     handleDbErr(res.error);
     return;
   }
+  const events = diffPartnerEvents(res.pair);
   adoptDbPair(res.pair);
+  if (events.length) emitPartnerEvents(events);
+}
+
+/** ---------- partner activity events ----------
+ *  When the OTHER member changes something, the UI shows a toast + browser
+ *  notification. Detection diffs the DB history rows we've already seen
+ *  against the freshly fetched ones: each new row (other than our own) is a
+ *  partner action. Works over both the realtime leg and the polling
+ *  fallback, so the other device's adds/comments/edits surface within ~8s
+ *  even before the realtime publication is enabled. */
+
+export type PartnerEvent = {
+  kind:
+    | "added"
+    | "comment"
+    | "completed"
+    | "deleted"
+    | "edited"
+    | "reopened"
+    | "snoozed"
+    | "rescheduled"
+    | "checkin"
+    | "joined";
+  actorName: string;
+  detail: string;
+};
+
+const partnerListeners = new Set<(events: PartnerEvent[]) => void>();
+
+/** Subscribe to partner-activity events (returns an unsubscribe fn). */
+export function subscribePartnerEvents(
+  listener: (events: PartnerEvent[]) => void
+): () => void {
+  partnerListeners.add(listener);
+  return () => partnerListeners.delete(listener);
+}
+
+function emitPartnerEvents(events: PartnerEvent[]) {
+  if (!events.length) return;
+  // Count toward the unread badge (joins already celebrate via their own
+  // toast, so they don't pile up as unread).
+  unreadCount += events.filter((e) => e.kind !== "joined").length;
+  for (const ev of events) {
+    recentEvents.unshift({ event: ev, at: new Date().toISOString() });
+  }
+  if (recentEvents.length > RECENT_CAP) recentEvents.length = RECENT_CAP;
+  partnerListeners.forEach((l) => l(events));
+  emit(); // re-render badge readers
+}
+
+/** Unread partner-activity count for the notification badge (session-only). */
+let unreadCount = 0;
+
+const RECENT_CAP = 30;
+const recentEvents: { event: PartnerEvent; at: string }[] = [];
+
+/** Recent partner-activity events for the notifications panel. */
+export function getRecentEvents(): { event: PartnerEvent; at: string }[] {
+  return recentEvents;
+}
+
+export function getUnreadCount(): number {
+  return unreadCount;
+}
+
+export function clearUnread(): void {
+  unreadCount = 0;
+  emit();
+}
+
+/** Ids of the history rows seen in the previous DB snapshot. Null until the
+ *  first successful fetch — that fetch establishes the baseline silently. */
+let lastDbHistory: Set<string> | null = null;
+
+function diffPartnerEvents(next: Pair): PartnerEvent[] {
+  const me = state.user?.id;
+  const events: PartnerEvent[] = [];
+  if (!me || !lastDbHistory) {
+    lastDbHistory = new Set(next.history.map((h) => h.id));
+    return events;
+  }
+  const seen = lastDbHistory;
+  for (const h of next.history) {
+    if (seen.has(h.id)) continue;
+    seen.add(h.id);
+    if (h.actorId === me || h.actorId === "sys") continue; // own action / system
+    const base = { actorName: h.actorName, detail: h.detail };
+    switch (h.verb) {
+      case "added":
+        events.push({ kind: "added", ...base });
+        break;
+      case "commented":
+        events.push({ kind: "comment", ...base });
+        break;
+      case "completed":
+        events.push({ kind: "completed", ...base });
+        break;
+      case "deleted":
+        events.push({ kind: "deleted", ...base });
+        break;
+      case "edited":
+        events.push({ kind: "edited", ...base });
+        break;
+      case "reopened":
+        events.push({ kind: "reopened", ...base });
+        break;
+      case "snoozed":
+        events.push({ kind: "snoozed", ...base });
+        break;
+      case "rescheduled":
+        events.push({ kind: "rescheduled", ...base });
+        break;
+      case "checked-in":
+        events.push({ kind: "checkin", ...base });
+        break;
+      case "joined":
+        events.push({ kind: "joined", ...base });
+        break;
+      // created / reminded / attached / pinned / unpinned — self-evident on
+      // the card (or already announced by the reminder UX) — stay quiet.
+    }
+  }
+  return events;
 }
 
 /** Adopt the DB copy as authoritative, preserving our monotonic rev so the
@@ -460,6 +615,7 @@ export async function createPairAsync(
     if (!created.ok) {
       handleDbErr(created.error);
     } else {
+      lastDbHistory = null; // fresh pair: the first fetch never notifies
       watchPair(pair.code);
       // Items (none) + history beyond the "created" entry dbCreatePair wrote.
       syncItems(pair.code, pair, "[]", 1);
@@ -533,6 +689,7 @@ export async function joinPairAsync(
     };
     state.activeCode = normalized;
     adoptDbPair(fetched.pair);
+    lastDbHistory = null; // joining: the pair's existing state is the baseline
     watchPair(normalized);
     save();
     emit();

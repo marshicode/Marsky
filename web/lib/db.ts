@@ -161,6 +161,9 @@ export async function dbCreatePair(
   actor: Member
 ): Promise<{ ok: boolean; error?: unknown }> {
   const supabase = getClient();
+  // Plain inserts: only ever called for a fresh pair, and PostgREST's upsert
+  // path hits RLS (no UPDATE policies on these tables) even with
+  // ignoreDuplicates — so insert it is.
   const { error: e1 } = await supabase.from("pairs").insert({
     code,
     name: name.slice(0, 40),
@@ -198,6 +201,24 @@ export async function dbJoinPair(
     detail: "the pair",
   });
   return { ok: !e2, error: e2 };
+}
+
+/** Ensure the given member row exists for the pair (idempotent). Repairs the
+ *  broken-seed state where the pair row landed but the creator's membership
+ *  insert failed (e.g. an RLS hiccup at create time). */
+export async function dbEnsureMember(
+  code: string,
+  member: Member
+): Promise<{ ok: boolean; error?: unknown }> {
+  const supabase = getClient();
+  const { error } = await supabase.from("pair_members").insert({
+    pair_code: code,
+    user_id: member.id,
+  });
+  // A duplicate-key race (two devices healing at once) is fine — it means
+  // the membership already exists.
+  const isDup = (error as { code?: string } | null)?.code === "23505";
+  return { ok: !error || isDup, error: isDup ? undefined : error };
 }
 
 export async function dbUpsertUser(actor: Member): Promise<{ ok: boolean; error?: unknown }> {
