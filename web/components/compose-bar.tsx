@@ -23,6 +23,17 @@ const QUICK = [
   { label: "tomorrow", minutes: 1440 },
 ];
 
+/** Warning for a picked date outside the current year (system clock), or null
+ *  when acceptable. Covers both previous and next years. */
+function yearWarning(value: string): string | null {
+  const picked = new Date(value);
+  const currentYear = new Date().getFullYear();
+  if (picked.getFullYear() !== currentYear) {
+    return "Invalid Date";
+  }
+  return null;
+}
+
 export function ComposeBar({
   editing,
   onSubmit,
@@ -50,6 +61,7 @@ export function ComposeBar({
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [linkName, setLinkName] = useState("");
+  const [dueError, setDueError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const toggleLabel = (id: number) =>
@@ -57,6 +69,22 @@ export function ComposeBar({
 
   const submit = () => {
     if (!text.trim()) return;
+    // Reminder date must be in the future. A date from a previous year gets
+    // its own explicit warning (current year is read from the system clock).
+    // Editing an overdue item with its date untouched stays savable.
+    const dueUnchanged =
+      editing?.dueAt && due === toLocalInput(new Date(editing.dueAt));
+    if (due && !dueUnchanged) {
+      const yearError = yearWarning(due);
+      if (yearError) {
+        setDueError(yearError);
+        return;
+      }
+      if (new Date(due).getTime() < Date.now() - 60_000) {
+        setDueError("That time is already in the past — pick a future time.");
+        return;
+      }
+    }
     onSubmit({
       text: text.trim(),
       note: note.trim() || undefined,
@@ -71,6 +99,7 @@ export function ComposeBar({
     setRecurring(null);
     setLabels([]);
     setAttachments([]);
+    setDueError("");
   };
 
   const onFile = (file: File | undefined) => {
@@ -147,9 +176,18 @@ export function ComposeBar({
               <input
                 type="datetime-local"
                 value={due}
-                onChange={(e) => setDue(e.target.value)}
+                min={toLocalInput(new Date())}
+                onChange={(e) => {
+                  setDue(e.target.value);
+                  setDueError(yearWarning(e.target.value) ?? "");
+                }}
                 className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3 py-2 text-[14px] outline-none focus:border-brand"
               />
+              {dueError && (
+                <p className="mt-1.5 text-[12.5px] font-bold text-danger" role="alert">
+                  {dueError}
+                </p>
+              )}
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {QUICK.map((q) => (
                   <button

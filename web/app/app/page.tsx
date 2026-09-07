@@ -223,13 +223,23 @@ export default function PairListPage() {
     }
   };
 
-  const onSnooze = () => {
+  const onSnooze = (minutes: number) => {
     if (!modalItem) return;
-    store.snooze(code, modalItem.id, you, 30);
+    store.snooze(code, modalItem.id, you, minutes);
+    const when =
+      minutes >= 1440
+        ? "tomorrow"
+        : minutes >= 60
+          ? `in ${minutes / 60} h`
+          : `in ${minutes} min`;
+    const at = new Date(Date.now() + minutes * 60_000).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     toast(
       <span className="inline-flex items-center gap-2">
         <Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
-        Snoozed — will remind you both again in 30 min
+        Snoozed — reminds you both again {when} ({at})
       </span>
     );
     setModal(null);

@@ -6,6 +6,14 @@ import { fmtDue, initials } from "@/lib/format";
 import { Avatar } from "@/components/avatar";
 import { Modal } from "@/components/modal";
 
+const SNOOZES: [string, number][] = [
+  ["10 min", 10],
+  ["30 min", 30],
+  ["1 h", 60],
+  ["3 h", 180],
+  ["Tomorrow", 1440],
+];
+
 export function CheckinModal({
   open,
   item,
@@ -20,7 +28,7 @@ export function CheckinModal({
   pair: Pair;
   you: Member;
   onAnswer: (answer: "yes" | "no") => void;
-  onSnooze: () => void;
+  onSnooze: (minutes: number) => void;
   onClose: () => void;
 }) {
   const checkin = item?.checkin ?? null;
@@ -86,12 +94,20 @@ export function CheckinModal({
               <p className="text-[14px] font-semibold text-ink-soft">
                 One of you isn’t done yet.
               </p>
-              <button
-                className="mt-2.5 rounded-full border-[1.5px] border-line bg-card px-3 py-1.5 text-[13px] font-bold hover:border-brand"
-                onClick={onSnooze}
-              >
-                Snooze +30 min
-              </button>
+              <p className="mt-1 text-[12px] font-bold text-ink-faint">
+                Remind us both again in…
+              </p>
+              <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+                {SNOOZES.map(([label, minutes]) => (
+                  <button
+                    key={minutes}
+                    className="rounded-full border-[1.5px] border-line bg-card px-3 py-1.5 text-[13px] font-bold transition-colors hover:border-brand"
+                    onClick={() => onSnooze(minutes)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="mt-4 flex gap-2.5">
