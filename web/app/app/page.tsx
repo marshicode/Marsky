@@ -6,6 +6,7 @@ import * as store from "@/lib/pair-store";
 import { getActiveCode, getActivePair, getUser, getVersion, subscribe } from "@/lib/pair-store";
 import type { Item, Member } from "@/lib/types";
 import { initials, timeAgo } from "@/lib/format";
+import { initSoundUnlock, isSoundMuted, playSound, setSoundMuted } from "@/lib/sounds";
 import {
   Bell,
   Check,
@@ -24,6 +25,8 @@ import {
   Sprout,
   Trash2,
   UserPlus,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Avatar } from "@/components/avatar";
@@ -51,6 +54,7 @@ export default function PairListPage() {
   const [modal, setModal] = useState<ModalState>(null);
   const [editing, setEditing] = useState<Item | null>(null);
   const [notifsOpen, setNotifsOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   // Hydration gate: the server prerenders this page empty (no localStorage),
   // so the client must agree on that first render — otherwise React logs a
   // hydration mismatch every time a returning user loads /app. After the
@@ -63,11 +67,18 @@ export default function PairListPage() {
     if (mounted && (!user || !pair)) router.replace("/");
   }, [user, pair, router, mounted]);
 
+  /* Sound unlock + persisted mute state (see lib/sounds.ts). */
+  useEffect(() => {
+    setSoundOn(!isSoundMuted());
+    return initSoundUnlock();
+  }, []);
+
   /* F4 — reminder loop: fire due items every 10s (in-app + browser). */
   useEffect(() => {
     const tick = () => {
       const fired = store.checkDue();
       for (const item of fired) {
+        playSound("due");
         toast(
           <span className="inline-flex items-center gap-2">
             <Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -127,6 +138,8 @@ export default function PairListPage() {
     return store.subscribePartnerEvents((events) => {
       for (const ev of events) {
         if (ev.kind === "joined") continue;
+        if (ev.kind === "comment") playSound("comment");
+        else if (ev.kind === "added") playSound("added");
         const { icon, text } = partnerEventCopy(ev);
         toast(
           <span className="inline-flex items-center gap-2">
@@ -388,6 +401,24 @@ export default function PairListPage() {
           {code}
         </button>
         <div className="ml-auto flex items-center gap-2">
+          <button
+            className="flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border-[1.5px] border-line bg-card text-ink-soft hover:border-brand hover:text-brand-dark dark:hover:text-brand-light"
+            onClick={() => {
+              const next = !soundOn;
+              setSoundOn(next);
+              setSoundMuted(!next);
+              if (next) playSound("added"); // confirm with a chime
+            }}
+            title={soundOn ? "Mute notification sounds" : "Unmute notification sounds"}
+            aria-label={soundOn ? "Mute notification sounds" : "Unmute notification sounds"}
+            aria-pressed={soundOn}
+          >
+            {soundOn ? (
+              <Volume2 className="h-[18px] w-[18px]" aria-hidden="true" />
+            ) : (
+              <VolumeX className="h-[18px] w-[18px]" aria-hidden="true" />
+            )}
+          </button>
           <div className="relative">
             <button
               className="relative flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border-[1.5px] border-line bg-card text-ink-soft hover:border-brand hover:text-brand-dark dark:hover:text-brand-light"
