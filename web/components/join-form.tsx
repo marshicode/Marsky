@@ -66,7 +66,7 @@ export function JoinForm({ initialCode }: { initialCode: string }) {
           onKeyDown={(e) => e.key === "Enter" && doJoin()}
           placeholder="e.g. Maya"
           maxLength={30}
-          className="w-full rounded-[10px] border-[1.5px] border-line bg-bg px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
+          className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
         />
         {error && <p className="mt-2 text-[13px] font-bold text-danger">{error}</p>}
 

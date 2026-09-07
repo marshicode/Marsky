@@ -42,7 +42,7 @@ export function initials(name: string): string {
 }
 
 export function pickColor(index: number): string {
-  const colors = ["#F97316", "#3B82F6", "#A855F7", "#22C55E", "#EF4444", "#0EA5E9"];
+  const colors = ["#F97316", "#5488FD", "#9D5B4A", "#22C55E", "#EF4444", "#8B84C2"];
   return colors[index % colors.length];
 }
 

@@ -92,8 +92,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-[9vh] text-center">
-      <main className="flex max-w-[620px] flex-col items-center">
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-[7vh] text-center sm:px-6">
+      <main className="flex w-full max-w-[620px] flex-col items-center rounded-[26px] bg-canvas px-6 py-10 shadow-[var(--shadow-canvas)] sm:px-12">
         <Logo size={64} />
         <h1 className="mt-[18px] text-[40px] font-black leading-[36px] tracking-[-1.5px] text-brand-dark sm:text-[52px] dark:text-brand-light">
           Marsky
@@ -137,7 +137,7 @@ export default function Home() {
           onKeyDown={(e) => e.key === "Enter" && doCreate()}
           placeholder="e.g. Maya"
           maxLength={30}
-          className="w-full rounded-[10px] border-[1.5px] border-line bg-bg px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
+          className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
         />
         <label className="mb-1.5 mt-3 block text-[11.5px] font-bold uppercase tracking-[.6px] text-ink-soft">
           Pair name <span className="font-normal normal-case text-ink-faint">(optional)</span>
@@ -148,7 +148,7 @@ export default function Home() {
           onChange={(e) => setPairName(e.target.value)}
           placeholder="e.g. Our apartment"
           maxLength={40}
-          className="w-full rounded-[10px] border-[1.5px] border-line bg-bg px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
+          className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
         />
         {error && <p className="mt-2 text-[13px] font-bold text-danger">{error}</p>}
         <div className="mt-5 flex justify-end gap-2.5">
@@ -174,7 +174,7 @@ export default function Home() {
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="e.g. M3R5KY"
           maxLength={6}
-          className="w-full rounded-[10px] border-[1.5px] border-line bg-bg px-3.5 py-[11px] font-mono text-[18px] font-extrabold tracking-[3px] uppercase outline-none focus:border-brand"
+          className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3.5 py-[11px] font-mono text-[18px] font-extrabold tracking-[3px] uppercase outline-none focus:border-brand"
         />
         <label className="mb-1.5 mt-3 block text-[11.5px] font-bold uppercase tracking-[.6px] text-ink-soft">
           Your name
@@ -186,7 +186,7 @@ export default function Home() {
           onKeyDown={(e) => e.key === "Enter" && doJoin()}
           placeholder="e.g. Alex"
           maxLength={30}
-          className="w-full rounded-[10px] border-[1.5px] border-line bg-bg px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
+          className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
         />
         {error && <p className="mt-2 text-[13px] font-bold text-danger">{error}</p>}
         <div className="mt-5 flex justify-end gap-2.5">

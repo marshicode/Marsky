@@ -100,7 +100,7 @@ export function ComposeBar({
   };
 
   return (
-    <div className="mb-[18px] rounded-[14px] border-[1.5px] border-line bg-card p-3.5 shadow-[var(--shadow-elev)]">
+    <div className="mb-[18px] rounded-[16px] border-[1.5px] border-line bg-card p-4 shadow-[var(--shadow-card)]">
       <div className="flex items-center gap-2">
         <input
           value={text}
@@ -110,7 +110,7 @@ export function ComposeBar({
           }}
           placeholder="Add a shared note… e.g. “pay rent”, “buy milk”, “finish essay”"
           maxLength={200}
-          className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-line bg-bg px-3.5 py-[11px] text-[15px] outline-none transition-colors focus:border-brand"
+          className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3.5 py-[11px] text-[15px] outline-none transition-colors focus:border-brand"
         />
         {editing && (
           <button
@@ -148,7 +148,7 @@ export function ComposeBar({
                 type="datetime-local"
                 value={due}
                 onChange={(e) => setDue(e.target.value)}
-                className="w-full rounded-[10px] border-[1.5px] border-line bg-bg px-3 py-2 text-[14px] outline-none focus:border-brand"
+                className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3 py-2 text-[14px] outline-none focus:border-brand"
               />
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {QUICK.map((q) => (
@@ -157,7 +157,7 @@ export function ComposeBar({
                     onClick={() => setDue(toLocalInput(new Date(Date.now() + q.minutes * 60_000)))}
                     className={`rounded-full border-[1.5px] px-2.5 py-1 text-[12px] font-bold transition-colors ${
                       due
-                        ? "border-line bg-bg text-ink-soft hover:border-brand"
+                        ? "border-line bg-canvas-2 text-ink-soft hover:border-brand"
                         : "border-brand bg-brand-soft text-brand-dark dark:text-brand-light"
                     }`}
                   >
@@ -173,7 +173,7 @@ export function ComposeBar({
               <select
                 value={recurring ?? ""}
                 onChange={(e) => setRecurring((e.target.value as "daily" | "weekly") || null)}
-                className="w-full rounded-[10px] border-[1.5px] border-line bg-bg px-3 py-2 text-[14px] outline-none focus:border-brand"
+                className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3 py-2 text-[14px] outline-none focus:border-brand"
               >
                 <option value="">Never</option>
                 <option value="daily">Daily</option>
@@ -212,7 +212,7 @@ export function ComposeBar({
               onChange={(e) => setNote(e.target.value)}
               placeholder="Extra note (optional)"
               maxLength={500}
-              className="w-full rounded-[10px] border-[1.5px] border-line bg-bg px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
+              className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
             />
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
@@ -239,7 +239,7 @@ export function ComposeBar({
               {attachments.map((a) => (
                 <span
                   key={a.id}
-                  className="inline-flex items-center gap-1 rounded-full bg-bg px-2.5 py-1 text-[12px] text-ink-soft"
+                  className="inline-flex items-center gap-1 rounded-full bg-canvas-2 px-2.5 py-1 text-[12px] text-ink-soft"
                 >
                   <Paperclip className="h-3 w-3" aria-hidden="true" />
               {a.name}
@@ -259,14 +259,14 @@ export function ComposeBar({
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
                   placeholder="https://…"
-                  className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-line bg-bg px-3 py-2 text-[14px] outline-none focus:border-brand"
+                  className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3 py-2 text-[14px] outline-none focus:border-brand"
                 />
                 <input
                   value={linkName}
                   onChange={(e) => setLinkName(e.target.value)}
                   placeholder="Name (optional)"
                   maxLength={60}
-                  className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-line bg-bg px-3 py-2 text-[14px] outline-none focus:border-brand"
+                  className="min-w-0 flex-1 rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3 py-2 text-[14px] outline-none focus:border-brand"
                 />
                 <button
                   className="rounded-full border-[1.5px] border-line bg-card px-3 text-[13px] font-bold hover:border-brand"

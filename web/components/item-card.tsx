@@ -94,11 +94,11 @@ export function ItemCard({
 
   return (
     <article
-      className={`rounded-[14px] border-[1.5px] bg-card p-3.5 shadow-[var(--shadow-card)] transition-colors ${
+      className={`flex h-full flex-col rounded-[16px] border-[1.5px] bg-card p-4 shadow-[var(--shadow-card)] transition-all ${
         item.completed ? "border-line opacity-60" : border
       }`}
     >
-      <div className="flex items-start gap-2.5">
+      <div className="flex flex-1 items-start gap-2.5">
         <button
       className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[7px] border-2 transition-all ${
         item.completed
@@ -114,7 +114,7 @@ export function ItemCard({
       )}
     </button>
 
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
           <p
             className={`text-[17px] font-bold leading-[1.35] ${
               item.completed ? "text-ink-soft line-through" : ""
@@ -154,7 +154,7 @@ export function ItemCard({
           )}
 
           {/* meta row: who-did-what + badges */}
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-ink-soft">
+          <div className="mt-auto flex flex-wrap items-center gap-2 pt-2.5 text-[12px] text-ink-soft">
             <span className="inline-flex items-center gap-1">
               <Avatar initials={initials(item.createdByName)} size="mini" color={memberOf(item.createdBy)?.color ?? "#78716C"} />
               <span>{item.createdByName} added</span>
@@ -206,7 +206,7 @@ export function ItemCard({
         <div className="flex shrink-0 flex-col items-end gap-1">
           <div className="flex gap-1">
             <button
-              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-bg"
+              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-canvas-2"
               onClick={() => setShowComments((s) => !s)}
               aria-label="Comments"
               aria-expanded={showComments}
@@ -214,7 +214,7 @@ export function ItemCard({
               <MessageCircle className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
-              className={`mini rounded-lg px-1.5 py-1 transition-colors hover:bg-bg ${
+              className={`mini rounded-lg px-1.5 py-1 transition-colors hover:bg-canvas-2 ${
                 item.pinned ? "text-brand" : "text-ink-soft"
               }`}
               onClick={onTogglePin}
@@ -224,14 +224,14 @@ export function ItemCard({
               <Pin className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
-              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-bg"
+              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-canvas-2"
               onClick={onEdit}
               aria-label="Edit"
             >
               <Pencil className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
-              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-bg"
+              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-canvas-2"
               onClick={onDelete}
               aria-label="Delete"
             >
@@ -247,7 +247,7 @@ export function ItemCard({
           {item.comments.map((c) => (
             <div key={c.id} className="mb-2 flex gap-2 text-[13.5px]">
               <Avatar initials={initials(c.authorName)} size="sm" color={memberOf(c.authorId)?.color ?? "#78716C"} />
-              <div className="rounded-[10px] bg-bg px-2.5 py-1.5">
+              <div className="rounded-[10px] bg-canvas-2 px-2.5 py-1.5">
                 <span className="mr-1.5 text-[12px] font-bold">{c.authorName}</span>
                 <span className="text-[11px] text-ink-faint">{timeAgo(c.at)}</span>
                 <div className="break-words">{c.text}</div>
@@ -266,7 +266,7 @@ export function ItemCard({
               }}
               placeholder="Reply…"
               maxLength={300}
-              className="min-w-0 flex-1 rounded-lg border-[1.5px] border-line bg-bg px-2.5 py-1.5 text-[13px] outline-none focus:border-brand"
+              className="min-w-0 flex-1 rounded-lg border-[1.5px] border-transparent bg-canvas-2 px-2.5 py-1.5 text-[13px] outline-none focus:border-brand"
             />
             <button
               className="rounded-lg border-[1.5px] border-line bg-card px-2.5 py-1.5 text-[13px] font-bold text-brand-dark hover:border-brand dark:text-brand-light"

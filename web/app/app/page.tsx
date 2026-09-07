@@ -13,6 +13,7 @@ import {
   Clock,
   Copy,
   History,
+  LayoutGrid,
   MessageCircle,
   PartyPopper,
   Pencil,
@@ -286,15 +287,102 @@ export default function PairListPage() {
   /* ---------- render ---------- */
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-bg/92 px-5 py-3 backdrop-blur-md">
-        <div className="flex items-center gap-2 font-black text-brand-dark dark:text-brand-light">
-          <Logo size={26} />
-          Marsky
+    <div className="flex flex-1">
+      {/* Amber brand rail — the reference layout's signature (Dribbble 14770965) */}
+      <aside className="sticky top-0 hidden h-dvh w-[272px] shrink-0 flex-col bg-panel lg:flex">
+        <div className="flex items-center gap-3 px-7 pt-7">
+          <Logo size={38} />
+          <div>
+            <p className="text-[19px] font-black leading-none tracking-[-0.3px] text-[var(--on-panel)]">
+              Marsky
+            </p>
+            <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[1.2px] text-[var(--on-panel-soft)]">
+              One list · two people
+            </p>
+          </div>
         </div>
+
+        <nav className="mt-9 px-4" aria-label="List views">
+          <div className="flex items-center justify-between rounded-[12px] bg-[var(--on-panel-field)] px-4 py-3 text-[var(--on-panel)]">
+            <span className="flex items-center gap-2.5 text-[14.5px] font-extrabold">
+              <LayoutGrid className="h-[18px] w-[18px]" aria-hidden="true" />
+              All notes
+            </span>
+            <span className="rounded-full bg-[var(--rail-chip)] px-2 py-0.5 text-[11px] font-extrabold tabular-nums text-[var(--on-panel)]">
+              {items.length}
+            </span>
+          </div>
+          {pinned.length > 0 && (
+            <button
+              className="mt-1 flex w-full items-center gap-2.5 rounded-[12px] px-4 py-3 text-[14.5px] font-extrabold text-[var(--on-panel-soft)] transition-colors hover:bg-[var(--on-panel-field)] hover:text-[var(--on-panel)]"
+              onClick={() =>
+                pinned[0] &&
+                document
+                  .getElementById(pinned[0].id)
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" })
+              }
+            >
+              <Pin className="h-[18px] w-[18px]" aria-hidden="true" />
+              Pinned
+              <span className="ml-auto rounded-full bg-[var(--on-panel-field)] px-2 py-0.5 text-[11px] font-extrabold tabular-nums">
+                {pinned.length}
+              </span>
+            </button>
+          )}
+        </nav>
+
+        <div className="mt-auto px-6 pb-7">
+          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[var(--on-panel-soft)]">
+            Your pair
+          </p>
+          <div className="mt-2.5 rounded-[16px] bg-[var(--on-panel-field)] p-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[19px] font-extrabold tracking-[3px] text-[var(--on-panel)]">
+                {code}
+              </span>
+              <button
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--rail-chip)] text-[var(--on-panel)] transition-colors hover:bg-[var(--rail-chip-hover)]"
+                onClick={copyCode}
+                title="Copy pair code"
+                aria-label="Copy pair code"
+              >
+                <Copy className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <Avatar initials={initials(you.name)} color={you.color} you />
+              {partner ? (
+                <Avatar
+                  initials={initials(partner.name)}
+                  color={partner.color}
+                  className="-ml-2.5"
+                />
+              ) : (
+                <span className="-ml-2.5 flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-[var(--on-panel-line)] bg-[var(--on-panel-field)] text-[13px] font-extrabold text-[var(--on-panel)]">
+                  ?
+                </span>
+              )}
+              <p className="text-[12px] font-bold leading-[1.35] text-[var(--on-panel-soft)]">
+                {partner
+                  ? "You’re paired — reminders reach you both"
+                  : "Share the code so your partner can join"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main column: the floating white canvas */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="mx-auto flex w-full max-w-[1100px] flex-1 flex-col bg-canvas lg:my-5 lg:ml-5 lg:rounded-[26px] lg:shadow-[var(--shadow-canvas)]">
+          <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-canvas/92 px-4 py-3 backdrop-blur-md sm:px-6 lg:rounded-t-[26px]">
+            <div className="flex items-center gap-2 font-black text-brand-dark dark:text-brand-light lg:hidden">
+              <Logo size={26} />
+              Marsky
+            </div>
         <button
           onClick={copyCode}
-          className="rounded-lg bg-brand-soft px-2.5 py-1 font-mono text-[12px] font-extrabold tracking-[1.5px] text-brand-dark transition-colors hover:bg-brand-soft/70 dark:text-brand-light"
+          className="rounded-lg bg-brand-soft px-2.5 py-1 font-mono text-[12px] font-extrabold tracking-[1.5px] text-brand-dark transition-colors hover:bg-brand-soft/70 dark:text-brand-light lg:hidden"
           title="Copy pair code"
         >
           {code}
@@ -381,7 +469,22 @@ export default function PairListPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[720px] flex-1 px-4 pb-24 pt-5">
+      <main className="flex-1 px-4 pb-24 pt-5 sm:px-6 lg:px-8">
+        {/* Desktop canvas heading (mobile keeps the compact header) */}
+        <div className="mb-4 hidden items-end justify-between lg:flex">
+          <div>
+            <h1 className="text-[24px] font-black leading-tight tracking-[-0.5px]">
+              {partner ? pair.name || "Our list" : "Your list"}
+            </h1>
+            <p className="mt-0.5 text-[13.5px] font-semibold text-ink-soft">
+              {items.filter((i) => !i.completed).length} open ·{" "}
+              {items.filter((i) => i.completed).length} done
+            </p>
+          </div>
+          <p className="text-[13px] font-semibold text-ink-faint">
+            One list, two people, zero nagging.
+          </p>
+        </div>
         {/* Invite banner (PRD §8.1) */}
         {!partner && (
           <div className="mb-[18px] flex flex-wrap items-center gap-2.5 rounded-[14px] border-[1.5px] border-dashed border-brand bg-brand-soft px-4 py-3 text-[14px]">
@@ -443,9 +546,9 @@ export default function PairListPage() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-2.5">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((item) => (
-              <div key={item.id} id={item.id}>
+              <div key={item.id} id={item.id} className="min-w-0">
                 <ItemCard
                   item={item}
                   members={pair.members}
@@ -505,6 +608,8 @@ export default function PairListPage() {
 
       <div id="compose-top" className="sr-only" aria-hidden="true" />
       <Toasts />
+        </div>
+      </div>
     </div>
   );
 }
