@@ -27,7 +27,8 @@ export interface Attachment {
 
 export interface Checkin {
   firedAt: string;
-  responses: Record<string, CheckinAnswer>;
+  /** member id -> their answer and when it was given (drives "done at" times). */
+  responses: Record<string, { answer: CheckinAnswer; at: string }>;
 }
 
 export interface Item {
@@ -42,6 +43,8 @@ export interface Item {
   completed: boolean;
   completedBy?: string | null;
   completedAt?: string | null;
+  /** member id -> when they marked the task done (shown to both partners). */
+  completedLog?: Record<string, string> | null;
   labels: number[];
   pinned: boolean;
   attachments: Attachment[];

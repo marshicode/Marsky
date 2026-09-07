@@ -783,6 +783,7 @@ export function toggleComplete(code: string, itemId: string, actor: Member) {
       item.completed = false;
       item.completedBy = null;
       item.completedAt = null;
+      item.completedLog = null;
       item.checkin = null;
       pushHistory(pair, actor, "reopened", `“${item.text}”`);
     }
@@ -811,6 +812,16 @@ function completeItem(pair: Pair, item: Item, actor: Member) {
     item.completed = true;
     item.completedBy = actor.id;
     item.completedAt = new Date().toISOString();
+    // Preserve when each member said done (mutual check-in passes both
+    // responses in) so the partner can see who finished, and when.
+    const responses = item.checkin?.responses;
+    item.completedLog = responses
+      ? Object.fromEntries(
+          Object.entries(responses)
+            .filter(([, r]) => r?.answer === "yes")
+            .map(([id, r]) => [id, r.at])
+        )
+      : { [actor.id]: item.completedAt };
     item.checkin = null;
     pushHistory(pair, actor, "completed", `“${item.text}”`);
   }
@@ -827,13 +838,15 @@ export function respondCheckin(
   mutate(code, (pair) => {
     const item = pair.items.find((i) => i.id === itemId);
     if (!item || !item.checkin) return;
-    item.checkin.responses[actor.id] = answer;
+    item.checkin.responses[actor.id] = { answer, at: new Date().toISOString() };
     const memberIds = pair.members.map((m) => m.id);
     const answered = Object.keys(item.checkin.responses).filter((id) =>
       memberIds.includes(id)
     );
     if (answered.length >= pair.members.length) {
-      const allYes = memberIds.every((id) => item.checkin!.responses[id] === "yes");
+      const allYes = memberIds.every(
+        (id) => item.checkin!.responses[id]?.answer === "yes"
+      );
       if (allYes) {
         pushHistory(pair, actor, "checked-in", `“${item.text}” with both members`);
         completeItem(pair, item, actor);

@@ -12,8 +12,28 @@ import {
 } from "lucide-react";
 import type { Item, Member } from "@/lib/types";
 import { LABELS } from "@/lib/types";
-import { dueState, fmtDue, initials, isImageUrl, timeAgo } from "@/lib/format";
+import { dueState, fmtDoneAt, fmtDue, initials, isImageUrl, timeAgo } from "@/lib/format";
 import { Avatar } from "@/components/avatar";
+
+/** Who marked this task done, and when — from the mutual check-in when both
+ *  partners answered, or the single completer for checkbox completion. */
+function doneLog(
+  item: Item,
+  members: Member[]
+): { name: string; color: string; at: string }[] {
+  const entries = Object.entries(item.completedLog ?? {});
+  if (entries.length > 0)
+    return entries
+      .map(([id, at]) => {
+        const m = members.find((x) => x.id === id);
+        return m && at ? { name: m.name, color: m.color, at } : null;
+      })
+      .filter((x): x is { name: string; color: string; at: string } => !!x);
+  const m = members.find((x) => x.id === item.completedBy);
+  if (m && item.completedAt)
+    return [{ name: m.name, color: m.color, at: item.completedAt }];
+  return [];
+}
 
 export function ItemCard({
   item,
@@ -70,7 +90,7 @@ export function ItemCard({
 
   const dueBadge = item.dueAt ? (
     <span
-      className={`due-badge rounded-full px-2.5 py-0.5 text-[11.5px] font-bold ${
+      className={`due-badge inline-flex h-6 items-center rounded-full px-2.5 text-[11.5px] font-bold ${
         state === "firing"
           ? "bg-brand text-white"
           : state === "late"
@@ -98,7 +118,7 @@ export function ItemCard({
         item.completed ? "border-line opacity-60" : border
       }`}
     >
-      <div className="flex flex-1 items-start gap-2.5">
+      <div className="flex flex-1 items-start gap-3">
         <button
       className={`mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[7px] border-2 transition-all ${
         item.completed
@@ -114,7 +134,7 @@ export function ItemCard({
       )}
     </button>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col pr-1">
           <p
             className={`text-[17px] font-bold leading-[1.35] ${
               item.completed ? "text-ink-soft line-through" : ""
@@ -123,7 +143,7 @@ export function ItemCard({
             {item.text}
           </p>
           {item.note ? (
-            <p className="mt-0.5 break-words text-[13px] text-ink-soft">{item.note}</p>
+            <p className="mt-1 break-words text-[13px] leading-[1.45] text-ink-soft">{item.note}</p>
           ) : null}
 
           {/* attachments (F10) */}
@@ -154,7 +174,7 @@ export function ItemCard({
           )}
 
           {/* meta row: who-did-what + badges */}
-          <div className="mt-auto flex flex-wrap items-center gap-2 pt-2.5 text-[12px] text-ink-soft">
+          <div className="mt-auto flex flex-wrap items-center gap-x-2.5 gap-y-1.5 pt-3 text-[12px] leading-6 text-ink-soft">
             <span className="inline-flex items-center gap-1">
               <Avatar initials={initials(item.createdByName)} size="mini" color={memberOf(item.createdBy)?.color ?? "#78716C"} />
               <span>{item.createdByName} added</span>
@@ -162,10 +182,19 @@ export function ItemCard({
             {item.completed && item.completedBy ? (
               <>
                 <span className="text-[var(--line)]">·</span>
-                <span className="inline-flex items-center gap-1 font-bold text-ok">
+                <span className="inline-flex h-6 items-center gap-1 font-bold text-ok">
                   <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
-                  done by {memberOf(item.completedBy)?.name ?? "someone"}
+                  done by
                 </span>
+                {doneLog(item, members).map((d, i) => (
+                  <span key={i} className="inline-flex h-6 items-center gap-1.5">
+                    <Avatar size="mini" initials={initials(d.name)} color={d.color} />
+                    <span className="font-bold text-ok">{d.name}</span>
+                    <span className="rounded-full bg-[var(--ok-fill)] px-2 text-[11px] font-bold leading-[18px] text-ok">
+                      {fmtDoneAt(d.at)}
+                    </span>
+                  </span>
+                ))}
               </>
             ) : null}
             {dueBadge ? (
@@ -186,7 +215,7 @@ export function ItemCard({
               return (
                 <span
                   key={id}
-                  className="rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
+                  className="inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-bold text-white"
                   style={{ backgroundColor: label.color }}
                 >
                   {label.name}
@@ -194,7 +223,7 @@ export function ItemCard({
               );
             })}
             {item.comments.length > 0 && (
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex h-6 items-center gap-1">
                 <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
                 {item.comments.length}
               </span>
@@ -203,10 +232,9 @@ export function ItemCard({
         </div>
 
         {/* actions */}
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <div className="flex gap-1">
-            <button
-              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-canvas-2"
+        <div className="-mr-1.5 -mt-1 flex shrink-0 items-center gap-0.5">
+          <button
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-canvas-2"
               onClick={() => setShowComments((s) => !s)}
               aria-label="Comments"
               aria-expanded={showComments}
@@ -214,7 +242,7 @@ export function ItemCard({
               <MessageCircle className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
-              className={`mini rounded-lg px-1.5 py-1 transition-colors hover:bg-canvas-2 ${
+              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-canvas-2 ${
                 item.pinned ? "text-brand" : "text-ink-soft"
               }`}
               onClick={onTogglePin}
@@ -224,26 +252,25 @@ export function ItemCard({
               <Pin className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
-              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-canvas-2"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-canvas-2"
               onClick={onEdit}
               aria-label="Edit"
             >
               <Pencil className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
-              className="mini rounded-lg px-1.5 py-1 text-ink-soft transition-colors hover:bg-canvas-2"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-canvas-2"
               onClick={onDelete}
               aria-label="Delete"
             >
               <Trash2 className="h-4 w-4" aria-hidden="true" />
             </button>
-          </div>
         </div>
       </div>
 
       {/* comments (F9) */}
       {showComments && (
-        <div className="mt-2.5 border-t border-line pt-2.5">
+        <div className="mt-3.5 border-t border-line pt-3">
           {item.comments.map((c) => (
             <div key={c.id} className="mb-2 flex gap-2 text-[13.5px]">
               <Avatar initials={initials(c.authorName)} size="sm" color={memberOf(c.authorId)?.color ?? "#78716C"} />
@@ -266,10 +293,10 @@ export function ItemCard({
               }}
               placeholder="Reply…"
               maxLength={300}
-              className="min-w-0 flex-1 rounded-lg border-[1.5px] border-transparent bg-canvas-2 px-2.5 py-1.5 text-[13px] outline-none focus:border-brand"
+              className="h-9 min-w-0 flex-1 rounded-lg border-[1.5px] border-transparent bg-canvas-2 px-2.5 text-[13px] outline-none focus:border-brand"
             />
             <button
-              className="rounded-lg border-[1.5px] border-line bg-card px-2.5 py-1.5 text-[13px] font-bold text-brand-dark hover:border-brand dark:text-brand-light"
+              className="h-9 rounded-lg border-[1.5px] border-line bg-card px-3 text-[13px] font-bold text-brand-dark hover:border-brand dark:text-brand-light"
               onClick={() => {
                 if (draft.trim()) {
                   onComment(draft);

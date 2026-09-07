@@ -68,6 +68,17 @@ export function fmtDue(iso: string): string {
   return `${d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })} ${hm(d)}`;
 }
 
+/** "Today 18:30" · "Yesterday 09:12" · "Sep 5, 14:00" — for done-at times. */
+export function fmtDoneAt(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (sameDay(d, now)) return `today at ${hm(d)}`;
+  if (sameDay(d, yesterday)) return `yesterday at ${hm(d)}`;
+  return `${d.toLocaleDateString([], { month: "short", day: "numeric" })} at ${hm(d)}`;
+}
+
 /** "2h ago" · "yesterday" · "just now" */
 export function timeAgo(iso: string): string {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;

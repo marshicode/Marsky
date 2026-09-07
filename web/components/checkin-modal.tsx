@@ -2,7 +2,7 @@
 
 import { Check, CheckCircle2, Clock, Hourglass, PartyPopper } from "lucide-react";
 import type { Item, Member, Pair } from "@/lib/types";
-import { fmtDue, initials } from "@/lib/format";
+import { fmtDoneAt, fmtDue, initials } from "@/lib/format";
 import { Avatar } from "@/components/avatar";
 import { Modal } from "@/components/modal";
 
@@ -32,7 +32,23 @@ export function CheckinModal({
   onClose: () => void;
 }) {
   const checkin = item?.checkin ?? null;
-  const answered = (m: Member) => (checkin ? checkin.responses[m.id] : undefined);
+  // Responses may be legacy plain strings in old persisted pairs — normalize.
+  const raw = (m: Member) =>
+    checkin
+      ? (checkin.responses[m.id] as
+          | { answer: "yes" | "no"; at?: string }
+          | "yes"
+          | "no"
+          | undefined)
+      : undefined;
+  const answered = (m: Member) => {
+    const r = raw(m);
+    return typeof r === "string" ? r : r?.answer;
+  };
+  const doneAt = (m: Member) => {
+    const r = raw(m);
+    return typeof r === "object" && r ? (r.at ?? null) : null;
+  };
   const everyoneAnswered =
     checkin !== null && pair.members.every((m) => answered(m) !== undefined);
   const allYes = everyoneAnswered && pair.members.every((m) => answered(m) === "yes");
@@ -53,6 +69,9 @@ export function CheckinModal({
         <span className="inline-flex items-center gap-1.5">
           <CheckCircle2 className="h-4 w-4 text-ok" aria-hidden="true" />
           {m.name} said done
+          {doneAt(m) && (
+            <span className="text-ink-faint">· {fmtDoneAt(doneAt(m)!)}</span>
+          )}
         </span>
       );
     return (
