@@ -13,6 +13,7 @@ import {
   CheckCheck,
   Clock,
   Copy,
+  Heart,
   History,
   LayoutGrid,
   MessageCircle,
@@ -25,6 +26,7 @@ import {
   Sprout,
   Trash2,
   UserPlus,
+  Users,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -61,7 +63,7 @@ export default function PairListPage() {
   // client has hydrated, a deferred notify flips this to true.
   const mounted = useHydrated();
   const autoOpened = useRef<string | null>(null);
-  const prevMembers = useRef(0);
+  const prevMemberIds = useRef<string[] | null>(null);
 
   useEffect(() => {
     if (mounted && (!user || !pair)) router.replace("/");
@@ -115,21 +117,22 @@ export default function PairListPage() {
     }
   }, [pendingCheckin]);
 
-  /* Celebrate a partner joining (PRD §8.1 step 4). */
+  /* Celebrate any new member joining (pair 2nd member, or group additions). */
   useEffect(() => {
     if (!pair) return;
-    if (prevMembers.current === 1 && pair.members.length === 2) {
-      const joined = pair.members.find((m) => m.id !== user?.id);
+    const prev = prevMemberIds.current;
+    if (prev && pair.members.length > prev.length) {
+      const joined = pair.members.find((m) => !prev.includes(m.id));
       if (joined)
         toast(
           <span className="inline-flex items-center gap-2">
             <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {joined.name} joined — you’re now a pair.
+            {joined.name} joined the list.
           </span>
         );
     }
-    prevMembers.current = pair.members.length;
-  }, [pair, user?.id]);
+    prevMemberIds.current = pair.members.map((m) => m.id);
+  }, [pair]);
 
   /* Partner activity: when the other device adds, comments on, completes,
      edits, or deletes something, toast it and (if allowed) notify the OS.
@@ -164,7 +167,10 @@ export default function PairListPage() {
       name: user.name,
       color: user.color,
     };
-  const partner = pair.members.find((m) => m.id !== user.id);
+  const allLists = store.getPairs();
+  const switcherLists = Object.values(allLists)
+    .filter((p) => p.members.some((m) => m.id === user.id))
+    .sort((a, b) => (a.code === code ? -1 : b.code === code ? 1 : 0));
 
   const items = [...pair.items].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1;
@@ -202,7 +208,7 @@ export default function PairListPage() {
         toast(
           <span className="inline-flex items-center gap-2">
             <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
-            Added — live for both of you
+            Added — live for everyone on the list
           </span>
         );
     }
@@ -216,7 +222,7 @@ export default function PairListPage() {
       toast(
         <span className="inline-flex items-center gap-2">
           <PartyPopper className="h-4 w-4 shrink-0" aria-hidden="true" />
-          You both did it!
+          Everyone did it!
         </span>
       );
       setModal(null);
@@ -239,7 +245,7 @@ export default function PairListPage() {
     toast(
       <span className="inline-flex items-center gap-2">
         <Clock className="h-4 w-4 shrink-0" aria-hidden="true" />
-        Snoozed — reminds you both again {when} ({at})
+            Snoozed — reminds everyone again {when} ({at})
       </span>
     );
     setModal(null);
@@ -250,7 +256,7 @@ export default function PairListPage() {
     toast(
       <span className="inline-flex items-center gap-2">
         <Copy className="h-4 w-4 shrink-0" aria-hidden="true" />
-        Pair code <strong>{code}</strong> copied
+        List code <strong>{code}</strong> copied
       </span>
     );
   };
@@ -268,7 +274,7 @@ export default function PairListPage() {
           <span className="inline-flex items-center gap-2">
             <Bell className="h-4 w-4 shrink-0" aria-hidden="true" />
             {p === "granted"
-              ? "Notifications on — reminders and partner updates reach you even in another tab"
+              ? "Notifications on — reminders and list updates reach you even in another tab"
               : p === "denied"
                 ? "Notifications blocked in this browser — updates still show here"
                 : "Notifications stay off — updates still show here"}
@@ -301,7 +307,7 @@ export default function PairListPage() {
     toast(
       <span className="inline-flex items-center gap-2">
         <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-        Deleted for both of you
+        Deleted for everyone on the list
       </span>
     );
     setModal(null);
@@ -320,7 +326,11 @@ export default function PairListPage() {
               Marsky
             </p>
             <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[1.2px] text-[var(--on-panel-soft)]">
-              One list · two people
+              {pair.members.length === 1
+                ? "One list · just you"
+                : pair.members.length === 2
+                  ? "One list · two people"
+                  : `One list · ${pair.members.length} people`}
             </p>
           </div>
         </div>
@@ -354,41 +364,101 @@ export default function PairListPage() {
           )}
         </nav>
 
-        <div className="mt-auto px-6 pb-7">
-          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[var(--on-panel-soft)]">
-            Your pair
-          </p>
-          <div className="mt-2.5 rounded-[16px] bg-[var(--on-panel-field)] p-4">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-[19px] font-extrabold tracking-[3px] text-[var(--on-panel)]">
-                {code}
-              </span>
-              <button
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--rail-chip)] text-[var(--on-panel)] transition-colors hover:bg-[var(--rail-chip-hover)]"
-                onClick={copyCode}
-                title="Copy pair code"
-                aria-label="Copy pair code"
-              >
-                <Copy className="h-4 w-4" aria-hidden="true" />
-              </button>
+        <div className="mt-auto">
+          {/* Your lists — switch across every pair/group you belong to */}
+          {switcherLists.length > 0 && (
+            <div className="px-4 pb-4">
+              <p className="px-2 text-[11px] font-bold uppercase tracking-[1.2px] text-[var(--on-panel-soft)]">
+                Your lists
+              </p>
+              <div className="mt-2 flex flex-col gap-1">
+                {switcherLists.map((p) => (
+                  <button
+                    key={p.code}
+                    onClick={() => {
+                      if (p.code !== code && store.setActiveCode(p.code)) {
+                        toast(
+                          <span className="inline-flex items-center gap-2">
+                            <LayoutGrid className="h-4 w-4 shrink-0" aria-hidden="true" />
+                            Switched to <strong>{p.name || "untitled list"}</strong>
+                          </span>
+                        );
+                      }
+                    }}
+                    className={`flex w-full items-center gap-2.5 rounded-[12px] px-3 py-2.5 text-left text-[13.5px] font-extrabold transition-colors ${
+                      p.code === code
+                        ? "bg-[var(--on-panel-field)] text-[var(--on-panel)]"
+                        : "text-[var(--on-panel-soft)] hover:bg-[var(--on-panel-field)] hover:text-[var(--on-panel)]"
+                    }`}
+                    aria-current={p.code === code ? "true" : undefined}
+                  >
+                    {p.kind === "group" ? (
+                      <Users className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    ) : (
+                      <Heart className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    )}
+                    <span className="min-w-0 flex-1 truncate">
+                      {p.name || (p.kind === "group" ? "Untitled group" : "Untitled pair")}
+                    </span>
+                    <span className="shrink-0 rounded-full bg-[var(--rail-chip)] px-2 py-0.5 text-[10.5px] font-extrabold tabular-nums text-[var(--on-panel)]">
+                      {p.members.length}
+                    </span>
+                  </button>
+                ))}
+                <button
+                  onClick={() => router.push("/?new=1")}
+                  className="flex w-full items-center gap-2.5 rounded-[12px] px-3 py-2.5 text-left text-[13.5px] font-extrabold text-brand-light transition-colors hover:bg-[var(--on-panel-field)]"
+                >
+                  <Plus className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  New list…
+                </button>
+              </div>
             </div>
-            <div className="mt-3 flex items-center gap-2">
-              <Avatar initials={initials(you.name)} color={you.color} you />
-              {partner ? (
-                <Avatar
-                  initials={initials(partner.name)}
-                  color={partner.color}
-                  className="-ml-2.5"
-                />
-              ) : (
-                <span className="-ml-2.5 flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-[var(--on-panel-line)] bg-[var(--on-panel-field)] text-[13px] font-extrabold text-[var(--on-panel)]">
-                  ?
+          )}
+
+          <div className="px-6 pb-7">
+            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[var(--on-panel-soft)]">
+              This list
+            </p>
+            <div className="mt-2.5 rounded-[16px] bg-[var(--on-panel-field)] p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono text-[19px] font-extrabold tracking-[3px] text-[var(--on-panel)]">
+                  {code}
                 </span>
-              )}
+                <button
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--rail-chip)] text-[var(--on-panel)] transition-colors hover:bg-[var(--rail-chip-hover)]"
+                  onClick={copyCode}
+                  title="Copy list code"
+                  aria-label="Copy list code"
+                >
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+              <div className="mt-3 flex items-center">
+                {pair.members.slice(0, 5).map((m, i) => (
+                  <Avatar
+                    key={m.id}
+                    initials={initials(m.name)}
+                    color={m.color}
+                    you={m.id === user.id}
+                    className={i > 0 ? "-ml-2.5" : ""}
+                  />
+                ))}
+                {pair.members.length > 5 && (
+                  <span className="-ml-2.5 flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border-2 border-[var(--on-panel-line)] bg-[var(--on-panel-field)] text-[11px] font-extrabold text-[var(--on-panel)]">
+                    +{pair.members.length - 5}
+                  </span>
+                )}
+                {pair.members.length === 1 && (
+                  <span className="-ml-2.5 flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border-2 border-[var(--on-panel-line)] bg-[var(--on-panel-field)] text-[13px] font-extrabold text-[var(--on-panel)]">
+                    ?
+                  </span>
+                )}
+              </div>
               <p className="text-[12px] font-bold leading-[1.35] text-[var(--on-panel-soft)]">
-                {partner
-                  ? "You’re paired — reminders reach you both"
-                  : "Share the code so your partner can join"}
+                {pair.members.length > 1
+                  ? `${pair.members.length} members — reminders reach everyone`
+                  : "Share the code so people can join"}
               </p>
             </div>
           </div>
@@ -406,7 +476,7 @@ export default function PairListPage() {
         <button
           onClick={copyCode}
           className="rounded-lg bg-brand-soft px-2.5 py-1 font-mono text-[12px] font-extrabold tracking-[1.5px] text-brand-dark transition-colors hover:bg-brand-soft/70 dark:text-brand-light lg:hidden"
-          title="Copy pair code"
+          title="Copy list code"
         >
           {code}
         </button>
@@ -435,8 +505,8 @@ export default function PairListPage() {
               onClick={openNotifications}
               title={
                 unread > 0
-                  ? `${unread} unread update${unread === 1 ? "" : "s"} from your partner`
-                  : "Notifications & partner activity"
+                  ? `${unread} unread update${unread === 1 ? "" : "s"} from your list`
+                  : "Notifications & list activity"
               }
               aria-label="Notifications"
               aria-expanded={notifsOpen}
@@ -456,12 +526,12 @@ export default function PairListPage() {
                 <div className="fixed inset-0 z-30" onClick={() => setNotifsOpen(false)} aria-hidden="true" />
                 <div className="absolute right-0 top-[calc(100%+8px)] z-40 w-[300px] overflow-hidden rounded-[14px] border-[1.5px] border-line bg-card shadow-toast">
                   <div className="border-b border-line px-4 py-2.5 text-[12px] font-extrabold uppercase tracking-[.6px] text-ink-soft">
-                    Partner activity
+                    List activity
                   </div>
                   <div className="max-h-[280px] overflow-y-auto py-1">
                     {recent.length === 0 ? (
                       <p className="px-4 py-4 text-[13px] leading-[1.5] text-ink-soft">
-                        Nothing yet — when your partner adds, comments, or edits a note, it
+                        Nothing yet — when someone adds, comments, or edits a note, it
                         shows up here.
                       </p>
                     ) : (
@@ -494,14 +564,21 @@ export default function PairListPage() {
             <History className="h-[18px] w-[18px]" aria-hidden="true" />
           </button>
           <div className="flex items-center">
-            <Avatar initials={initials(you.name)} color={you.color} you />
-            {partner ? (
+            {pair.members.slice(0, 4).map((m, i) => (
               <Avatar
-                initials={initials(partner.name)}
-                color={partner.color}
-                className="-ml-2.5"
+                key={m.id}
+                initials={initials(m.name)}
+                color={m.color}
+                you={m.id === user.id}
+                className={i > 0 ? "-ml-2.5" : ""}
               />
-            ) : (
+            ))}
+            {pair.members.length > 4 && (
+              <span className="avatar -ml-2.5 flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-card bg-[#d6d3d1] text-[11px] font-extrabold text-[#78716C] dark:bg-[var(--card-2)] dark:text-[var(--ink-faint)]">
+                +{pair.members.length - 4}
+              </span>
+            )}
+            {pair.members.length === 1 && (
               <span className="avatar -ml-2.5 flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-card bg-[#d6d3d1] text-[13px] font-extrabold text-[#78716C] dark:bg-[var(--card-2)] dark:text-[var(--ink-faint)]">
                 ?
               </span>
@@ -515,7 +592,7 @@ export default function PairListPage() {
         <div className="mb-4 hidden items-end justify-between lg:flex">
           <div>
             <h1 className="text-[24px] font-black leading-tight tracking-[-0.5px]">
-              {partner ? pair.name || "Our list" : "Your list"}
+              {pair.members.length > 1 ? pair.name || "Our list" : "Your list"}
             </h1>
             <p className="mt-0.5 text-[13.5px] font-semibold text-ink-soft">
               {items.filter((i) => !i.completed).length} open ·{" "}
@@ -523,18 +600,18 @@ export default function PairListPage() {
             </p>
           </div>
           <p className="text-[13px] font-semibold text-ink-faint">
-            One list, two people, zero nagging.
+            One list, together, zero nagging.
           </p>
         </div>
         {/* Invite banner (PRD §8.1) */}
-        {!partner && (
+        {pair.members.length === 1 && (
           <div className="mb-[18px] flex flex-wrap items-center gap-2.5 rounded-[14px] border-[1.5px] border-dashed border-brand bg-brand-soft px-4 py-3 text-[14px]">
             <span>
-              Your pair code is{" "}
+              Your list code is{" "}
               <strong className="font-mono text-brand-dark dark:text-brand-light">
                 {code}
               </strong>{" "}
-              — share it so your partner can join.
+              — share it so people can join.
             </span>
             <button
               className="ml-auto rounded-full bg-brand px-3 py-1.5 text-[13px] font-bold text-white hover:bg-brand-dark"
@@ -583,7 +660,7 @@ export default function PairListPage() {
             <Sprout className="mx-auto h-11 w-11 text-ink-faint" aria-hidden="true" />
             <p className="mt-3 leading-[1.6]">
               No notes yet. Add your first shared note above —<br />
-              it’ll appear for both of you instantly.
+              it’ll appear for everyone instantly.
             </p>
           </div>
         ) : (
@@ -629,7 +706,7 @@ export default function PairListPage() {
       <Modal open={modal?.kind === "delete" && !!deleteItem} onClose={() => setModal(null)}>
         <h2 className="text-[20px] font-black">Delete note?</h2>
         <p className="mt-1 text-[14px] leading-[1.5] text-ink-soft">
-          This removes “{deleteItem?.text}” from your shared list — for both of you.
+          This removes “{deleteItem?.text}” from your shared list — for everyone.
         </p>
         <div className="mt-5 flex justify-end gap-2.5">
           <button
@@ -689,7 +766,7 @@ function partnerEventCopy(ev: {
     case "joined":
       return {
         icon: <UserPlus className={iconSize} />,
-        text: `${ev.actorName} joined the pair`,
+        text: `${ev.actorName} joined the list`,
       };
     case "completed":
       return {

@@ -67,6 +67,7 @@ export async function ensureAnon(localName?: string | null): Promise<string | nu
 export interface DbPairRow {
   code: string;
   name: string;
+  kind: string;
   created_at: string;
   rev: number;
 }
@@ -76,7 +77,7 @@ const toIso = (v: string | null) => (v ? new Date(v).toISOString() : null);
 export async function dbFetchPair(code: string): Promise<{ ok: true; pair: Pair } | { ok: false; error: unknown }> {
   const supabase = getClient();
   const [pairRes, membersRes, itemsRes, historyRes] = await Promise.all([
-    supabase.from("pairs").select("code, name, created_at, rev").eq("code", code).maybeSingle(),
+    supabase.from("pairs").select("code, name, kind, created_at, rev").eq("code", code).maybeSingle(),
     supabase
       .from("pair_members")
       .select("user_id, joined_at, users(display_name, color)")
@@ -144,6 +145,7 @@ export async function dbFetchPair(code: string): Promise<{ ok: true; pair: Pair 
     pair: {
       code: pairRow.code,
       name: pairRow.name,
+      kind: pairRow.kind === "group" ? "group" : "pair",
       createdAt: toIso(pairRow.created_at) ?? new Date().toISOString(),
       members,
       items,
@@ -158,6 +160,7 @@ export async function dbFetchPair(code: string): Promise<{ ok: true; pair: Pair 
 export async function dbCreatePair(
   code: string,
   name: string,
+  kind: "pair" | "group",
   actor: Member
 ): Promise<{ ok: boolean; error?: unknown }> {
   const supabase = getClient();
@@ -167,6 +170,7 @@ export async function dbCreatePair(
   const { error: e1 } = await supabase.from("pairs").insert({
     code,
     name: name.slice(0, 40),
+    kind,
     rev: 1,
   });
   if (e1) return { ok: false, error: e1 };

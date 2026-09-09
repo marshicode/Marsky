@@ -91,7 +91,7 @@ export function CheckinModal({
             <h2 className="text-[20px] font-black">“{item.text}” — done?</h2>
           </div>
           <p className="mb-4 mt-1 text-[13px] text-ink-soft">
-            {item.dueAt ? `Reminded you both · ${fmtDue(item.dueAt)}` : "Reminded you both"}
+            {item.dueAt ? `Reminded everyone · ${fmtDue(item.dueAt)}` : "Reminded everyone"}
           </p>
 
           <div className="flex flex-col gap-2">
@@ -106,15 +106,15 @@ export function CheckinModal({
           {allYes ? (
             <div className="mt-4 flex items-center justify-center gap-2 text-center text-[16px] font-bold text-ok">
               <PartyPopper className="h-5 w-5" aria-hidden="true" />
-              You both did it — “{item.text}” is done!
+              You all did it — “{item.text}” is done!
             </div>
           ) : anyoneNo ? (
             <div className="mt-4 text-center">
               <p className="text-[14px] font-semibold text-ink-soft">
-                One of you isn’t done yet.
+                Not everyone is done yet.
               </p>
               <p className="mt-1 text-[12px] font-bold text-ink-faint">
-                Remind us both again in…
+                Remind everyone again in…
               </p>
               <div className="mt-2 flex flex-wrap justify-center gap-1.5">
                 {SNOOZES.map(([label, minutes]) => (

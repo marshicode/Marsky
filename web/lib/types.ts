@@ -5,6 +5,10 @@
 export type Recurring = null | "daily" | "weekly";
 export type CheckinAnswer = "yes" | "no";
 
+/** A list holds 1–8 people: 2 = pair, 3+ = group. */
+export const MAX_MEMBERS = 8;
+export type ListKind = "pair" | "group";
+
 export interface Member {
   id: string;
   name: string;
@@ -43,13 +47,13 @@ export interface Item {
   completed: boolean;
   completedBy?: string | null;
   completedAt?: string | null;
-  /** member id -> when they marked the task done (shown to both partners). */
+  /** member id -> when they marked the task done (shown to all members). */
   completedLog?: Record<string, string> | null;
   labels: number[];
   pinned: boolean;
   attachments: Attachment[];
   comments: Comment[];
-  /** Set when the mutual reminder has fired; cleared on snooze/recurring rollover. */
+  /** Set when the reminder has fired; cleared on snooze/recurring rollover. */
   checkin: Checkin | null;
   reminded: boolean;
 }
@@ -66,6 +70,8 @@ export interface HistoryEntry {
 export interface Pair {
   code: string;
   name: string;
+  /** 'pair' = legacy/intimate 2-person list, 'group' = up to 8 people. */
+  kind: ListKind;
   createdAt: string;
   members: Member[];
   items: Item[];

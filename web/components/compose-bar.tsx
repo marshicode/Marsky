@@ -171,7 +171,7 @@ export function ComposeBar({
           <div className="flex flex-wrap gap-3.5">
             <div className="min-w-[180px] flex-1">
               <label className="mb-1.5 block text-[11.5px] font-bold uppercase tracking-[.6px] text-ink-soft">
-                Remind both at
+                Remind everyone at
               </label>
               <input
                 type="datetime-local"

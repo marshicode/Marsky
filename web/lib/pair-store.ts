@@ -1,7 +1,7 @@
 "use client";
 
 /** Local-first adapter for the ARCHITECTURE.md §4 schema. Persists to
- *  localStorage and syncs between browser tabs (the two partners) over a
+ *  localStorage and syncs between browser tabs (the list's members) over a
  *  BroadcastChannel. When Supabase is configured AND the schema is applied,
  *  the same mutations also write through to the DB (RLS-enforced) and the
  *  pair stays live across devices via Postgres realtime. If the DB or schema
@@ -11,11 +11,13 @@ import type {
   Attachment,
   CheckinAnswer,
   Item,
+  ListKind,
   Member,
   Pair,
   PersistedState,
   User,
 } from "./types";
+import { MAX_MEMBERS } from "./types";
 import { generateCode, pickColor, uid, uuid } from "./format";
 import {
   dbCreatePair,
@@ -155,6 +157,22 @@ export function getPairs(): Record<string, Pair> {
 
 export function getActiveCode(): string | null {
   return state.activeCode;
+}
+
+/** List switcher: make another joined list active. Validates membership,
+ *  persists the choice, and moves the realtime watcher + poll to the new
+ *  list so cross-device sync follows the switch. */
+export function setActiveCode(code: string): boolean {
+  const normalized = code.trim().toUpperCase();
+  const pair = state.pairs[normalized];
+  if (!pair || !state.user) return false;
+  if (!pair.members.some((m) => m.id === state.user!.id)) return false;
+  if (state.activeCode === normalized) return true;
+  state.activeCode = normalized;
+  save();
+  if (dbAvailable) watchPair(normalized);
+  emit();
+  return true;
 }
 
 export function isDbMode(): boolean {
@@ -317,7 +335,7 @@ async function uploadPair(code: string, anon: string) {
   const creator = pair.members.find((m) => isUuid(m.id));
   if (!creator || !state.user) return;
   await dbUpsertUser(state.user).then(handleWriteErr);
-  const created = await dbCreatePair(code, pair.name, creator);
+  const created = await dbCreatePair(code, pair.name, pair.kind, creator);
   if (!created.ok) {
     handleDbErr(created.error);
     return;
@@ -565,17 +583,22 @@ export function initUser(name: string): User {
   return user;
 }
 
-/** F1 — create a pair. The creator becomes member 1. */
+/** F1 — create a list. The creator becomes member 1. */
 export function createPair(
   userName: string,
-  pairName?: string
+  pairName?: string,
+  kind: ListKind = "pair"
 ): Pair {
   const user = state.user ?? initUser(userName);
   let code = generateCode();
   while (state.pairs[code]) code = generateCode();
   const pair: Pair = {
     code,
-    name: (pairName?.trim() || `${user.name} & partner`).slice(0, 40),
+    name: (
+      pairName?.trim() ||
+      (kind === "group" ? `${user.name}'s group` : `${user.name} & partner`)
+    ).slice(0, 40),
+    kind,
     createdAt: new Date().toISOString(),
     members: [{ id: user.id, name: user.name, color: user.color }],
     items: [],
@@ -584,7 +607,7 @@ export function createPair(
   };
   state.pairs[code] = pair;
   state.activeCode = code;
-  pushHistory(pair, user, "created", `this pair`);
+  pushHistory(pair, user, "created", kind === "group" ? "this list" : "this pair");
   saveBroadcastEmit(code);
   return pair;
 }
@@ -594,7 +617,8 @@ export function createPair(
  *  back to pure local when the DB/schema is unavailable. */
 export async function createPairAsync(
   userName: string,
-  pairName?: string
+  pairName?: string,
+  kind: ListKind = "pair"
 ): Promise<Pair> {
   const id = await resolveAnonId(userName);
   if (id) {
@@ -607,11 +631,11 @@ export async function createPairAsync(
     save();
     emit();
   }
-  const pair = createPair(userName, pairName);
+  const pair = createPair(userName, pairName, kind);
   if (dbAvailable && state.user && isUuid(state.user.id)) {
     const me = state.user;
     await dbUpsertUser(me).then(handleWriteErr);
-    const created = await dbCreatePair(pair.code, pair.name, pair.members[0]);
+    const created = await dbCreatePair(pair.code, pair.name, pair.kind, pair.members[0]);
     if (!created.ok) {
       handleDbErr(created.error);
     } else {
@@ -626,7 +650,7 @@ export async function createPairAsync(
 
 export type JoinError = "not-found" | "full";
 
-/** F1 — join a pair by code (local mode). The joiner becomes member 2. */
+/** F1 — join a list by code (local mode). */
 export function joinPair(
   code: string,
   userName: string
@@ -634,7 +658,7 @@ export function joinPair(
   const normalized = code.trim().toUpperCase();
   const pair = state.pairs[normalized];
   if (!pair) return { error: "not-found" };
-  if (pair.members.length >= 2) return { error: "full" };
+  if (pair.members.length >= MAX_MEMBERS) return { error: "full" };
   const user = state.user ?? initUser(userName);
   const existing = pair.members.find((m) => m.id === user.id);
   if (!existing) {
@@ -644,7 +668,7 @@ export function joinPair(
       color: pickColor(pair.members.length),
     };
     pair.members.push(member);
-    pushHistory(pair, member, "joined", `the pair`);
+    pushHistory(pair, member, "joined", `the list`);
   }
   state.user = user;
   state.activeCode = normalized;
@@ -827,7 +851,7 @@ function completeItem(pair: Pair, item: Item, actor: Member) {
   }
 }
 
-/** F5 — answer a check-in. When both members have answered and both say
+/** F5 — answer a check-in. When every member has answered and all say
  *  yes, the item auto-completes. */
 export function respondCheckin(
   code: string,
@@ -848,7 +872,7 @@ export function respondCheckin(
         (id) => item.checkin!.responses[id]?.answer === "yes"
       );
       if (allYes) {
-        pushHistory(pair, actor, "checked-in", `“${item.text}” with both members`);
+        pushHistory(pair, actor, "checked-in", `“${item.text}” — everyone said done`);
         completeItem(pair, item, actor);
       }
       // Mixed answers: leave open; snooze is offered from the modal.
@@ -926,7 +950,7 @@ export function setLabels(code: string, itemId: string, labels: number[]) {
 
 /** F4 — the reminder loop. Fires due items once each; returns what fired so
  *  the UI can open the check-in and toast. Also pushes the fired state to
- *  the DB so the partner device sees it. */
+ *  the DB so every other device sees it. */
 export function checkDue(now = Date.now()): Item[] {
   const code = state.activeCode;
   const pair = code ? state.pairs[code] : null;
@@ -939,7 +963,7 @@ export function checkDue(now = Date.now()): Item[] {
     if (new Date(item.dueAt).getTime() <= now) {
       item.reminded = true;
       item.checkin = { firedAt: new Date(now).toISOString(), responses: {} };
-      pushHistory(pair, pair.members[0] ?? { id: "sys", name: "Marsky", color: "#F97316" }, "reminded", `“${item.text}” to both of you`);
+      pushHistory(pair, pair.members[0] ?? { id: "sys", name: "Marsky", color: "#F97316" }, "reminded", `“${item.text}” to everyone`);
       fired.push(item);
     }
   }
@@ -975,8 +999,8 @@ function demoPartner(name = "Maya"): Member | null {
   if (!pair) return null;
   let member = pair.members.find((m) => m.id.startsWith("demo-"));
   if (member) return member; // already joined — acts as the partner
-  if (pair.members.length >= 2) return null; // only block a THIRD member
-  member = { id: "demo-" + uid(), name: name.slice(0, 30), color: pickColor(1) };
+  if (pair.members.length >= MAX_MEMBERS) return null; // list is full
+  member = { id: "demo-" + uid(), name: name.slice(0, 30), color: pickColor(pair.members.length) };
   pair.members.push(member);
   pushHistory(pair, member, "joined", `the pair (demo)`);
   saveBroadcastEmit(code);

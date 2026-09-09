@@ -29,7 +29,7 @@ export function JoinForm({ initialCode }: { initialCode: string }) {
         setError(
           res.error === "not-found"
             ? "That code doesn’t exist — it may have been mistyped."
-            : "This pair already has two people. (Marsky is for two!)"
+            : "This list is full (8 members max)."
         );
       }
       return;
@@ -37,7 +37,7 @@ export function JoinForm({ initialCode }: { initialCode: string }) {
     toast(
       <span className="inline-flex items-center gap-2">
         <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-        You joined the pair
+        You joined the list
       </span>
     );
     router.push("/app");
@@ -47,7 +47,7 @@ export function JoinForm({ initialCode }: { initialCode: string }) {
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-[9vh] text-center">
       <main className="flex w-full max-w-[440px] flex-col items-center">
         <Logo size={48} />
-        <h1 className="mt-4 text-[24px] font-black">Join this pair</h1>
+        <h1 className="mt-4 text-[24px] font-black">Join this list</h1>
         <p className="mt-1 text-[14px] leading-[1.5] text-ink-soft">
           Enter your name to join the shared list with code:
         </p>

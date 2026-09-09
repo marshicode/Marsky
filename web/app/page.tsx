@@ -12,6 +12,7 @@ import {
   joinPairAsync,
   subscribe,
 } from "@/lib/pair-store";
+import type { ListKind } from "@/lib/types";
 import { PartyPopper, UserPlus } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/button";
@@ -27,17 +28,22 @@ export default function Home() {
   const [mode, setMode] = useState<null | "create" | "join">(null);
   const [name, setName] = useState(user?.name ?? "");
   const [pairName, setPairName] = useState("");
+  const [kind, setKind] = useState<ListKind>("pair");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (user && pair) router.replace("/app");
+    // ?new=1 is the sidebar "New list…" entry: let an existing member create
+    // or join another list instead of bouncing straight back to /app.
+    if (user && pair && !window.location.search.includes("new=1"))
+      router.replace("/app");
   }, [user, pair, router]);
 
   const openCreate = () => {
     setError("");
     setName(user?.name ?? "");
     setPairName("");
+    setKind("pair");
     setMode("create");
   };
   const openJoin = () => {
@@ -52,11 +58,11 @@ export default function Home() {
       setError("Tell us your name first");
       return;
     }
-    await createPairAsync(name, pairName);
+    await createPairAsync(name, pairName, kind);
     toast(
       <span className="inline-flex items-center gap-2">
         <PartyPopper className="h-4 w-4 shrink-0" aria-hidden="true" />
-        Pair created — share the code to invite your partner
+        List created — share the code to invite people
       </span>
     );
     router.push("/app");
@@ -77,7 +83,7 @@ export default function Home() {
         setError(
           res.error === "not-found"
             ? "That code doesn’t exist — double-check it."
-            : "This pair already has two people. (Marsky is for two!)"
+            : "This list is full (8 members max)."
         );
       }
       return;
@@ -85,7 +91,7 @@ export default function Home() {
     toast(
       <span className="inline-flex items-center gap-2">
         <UserPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-        You joined the pair
+        You joined the list
       </span>
     );
     router.push("/app");
@@ -98,18 +104,19 @@ export default function Home() {
         <h1 className="mt-[18px] text-[40px] font-black leading-[36px] tracking-[-1.5px] text-brand-dark sm:text-[52px] dark:text-brand-light">
           Marsky
         </h1>
-        <p className="mt-0.5 text-[20px] font-bold">One list, two people, zero nagging.</p>
+        <p className="mt-0.5 text-[20px] font-bold">One list, together, zero nagging.</p>
         <p className="mt-4 max-w-[52ch] text-[16px] leading-[1.65] text-ink-soft">
-          A shared reminder list for two — students, roommates, friends, parents. Pair
-          in seconds. Add a note, set a time, and it reminds{" "}
+          A shared reminder list for two — or the whole crew. Students, roommates,
+          friends, families. Pair up in seconds. Add a note, set a time, and it
+          reminds{" "}
           <em className="font-bold not-italic text-brand-dark dark:text-brand-light">
-            both
-          </em>{" "}
-          of you. When it fires, you check in: “done?”
+            everyone
+          </em>
+          . When it fires, you all check in: “done?”
         </p>
 
         <div className="mt-[30px] flex flex-wrap justify-center gap-3.5">
-          <Button onClick={openCreate}>Create a pair</Button>
+          <Button onClick={openCreate}>Create a list</Button>
           <Button variant="ghost" onClick={openJoin}>
             Join with a code
           </Button>
@@ -117,16 +124,52 @@ export default function Home() {
 
         <p className="mt-[34px] text-[13px] leading-[1.5] text-ink-faint">
           No accounts, no setup. Tip: open a second tab/window to the same URL and join
-          with the same code — the two tabs act as your two partners, syncing live.
+          with the same code — each tab acts as another member, syncing live.
         </p>
       </main>
 
       {/* Create modal (PRD §8.1) */}
       <Modal open={mode === "create"} onClose={() => setMode(null)}>
-        <h2 className="text-[20px] font-black">Create a pair</h2>
+        <h2 className="text-[20px] font-black">Create a list</h2>
         <p className="mb-2 text-[14px] leading-[1.5] text-ink-soft">
-          You’ll get a 6-character code to share with your partner.
+          You’ll get a 6-character code to share with your people.
         </p>
+        <label className="mb-1.5 mt-3 block text-[11.5px] font-bold uppercase tracking-[.6px] text-ink-soft">
+          Type
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {(
+            [
+              {
+                value: "pair",
+                title: "Pair",
+                desc: "Just you two — couples & roommates",
+              },
+              {
+                value: "group",
+                title: "Group",
+                desc: "Up to 8 people — flats, families, crews",
+              },
+            ] as { value: ListKind; title: string; desc: string }[]
+          ).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setKind(opt.value)}
+              aria-pressed={kind === opt.value}
+              className={`rounded-[12px] border-[1.5px] p-3 text-left transition-colors ${
+                kind === opt.value
+                  ? "border-brand bg-brand-soft"
+                  : "border-line bg-card hover:border-brand"
+              }`}
+            >
+              <span className="block text-[14px] font-black">{opt.title}</span>
+              <span className="mt-0.5 block text-[12px] font-semibold leading-[1.4] text-ink-soft">
+                {opt.desc}
+              </span>
+            </button>
+          ))}
+        </div>
         <label className="mb-1.5 mt-3 block text-[11.5px] font-bold uppercase tracking-[.6px] text-ink-soft">
           Your name
         </label>
@@ -140,7 +183,7 @@ export default function Home() {
           className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3.5 py-[11px] text-[15px] outline-none focus:border-brand"
         />
         <label className="mb-1.5 mt-3 block text-[11.5px] font-bold uppercase tracking-[.6px] text-ink-soft">
-          Pair name <span className="font-normal normal-case text-ink-faint">(optional)</span>
+          List name <span className="font-normal normal-case text-ink-faint">(optional)</span>
         </label>
         <input
           type="text"
@@ -161,12 +204,12 @@ export default function Home() {
 
       {/* Join modal (PRD §8.1) */}
       <Modal open={mode === "join"} onClose={() => setMode(null)}>
-        <h2 className="text-[20px] font-black">Join a pair</h2>
+        <h2 className="text-[20px] font-black">Join a list</h2>
         <p className="mb-2 text-[14px] leading-[1.5] text-ink-soft">
-          Enter the 6-character code your partner shared with you.
+          Enter the 6-character code that was shared with you.
         </p>
         <label className="mb-1.5 mt-3 block text-[11.5px] font-bold uppercase tracking-[.6px] text-ink-soft">
-          Pair code
+          List code
         </label>
         <input
           type="text"

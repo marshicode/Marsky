@@ -131,11 +131,13 @@ one time, and neither of you can pretend you forgot."
 
 - **Location triggers** ("remind when you arrive home") — deliberately excluded from
   this version; candidate for Phase 2.
-- Multi-pair management (multiple lists, folders, projects) — Marsky stays a
-  single-list product; more than one pair is possible later, but each pair keeps its
-  own single list.
-- More than 2 members per pair — the product is *for two*. Groups are a different
-  product.
+- Multi-pair management (multiple lists, folders, projects) — ~~Marsky stays a
+  single-list product~~ *Updated: users may now belong to several lists and switch
+  between them (sidebar switcher), but each list remains a single shared list.*
+- ~~More than 2 members per pair — the product is *for two*. Groups are a different
+  product.~~ *Updated (groups, this version): a list holds 2–8 members — 2 = pair,
+  3+ = group. The done rule is unchanged: every member confirms "done" before a task
+  completes. The `join_pair` RPC + RLS cap joins at 8 members atomically.*
 
 ---
 

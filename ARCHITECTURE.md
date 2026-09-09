@@ -331,10 +331,11 @@ matches the product's traffic shape.
    toasts, and a fast Phase 2 native path if retention data demands it.
 2. **Anonymous identity loss** (cleared browser storage = lost membership). Mitigation:
    join-by-link re-pairing is cheap; optionally add email upgrade later.
-3. **Supabase Realtime ceiling** is far above Marsky's needs, but if we ever go
-   multi-pair-per-user or add groups (PRD says no), revisit channel topology.
-4. **Code as secret** — pair codes are bearer tokens; the 2-member cap + rate limiting
-   must hold from day one (covered in §9).
+3. **Supabase Realtime ceiling** is far above Marsky's needs, but if groups grow
+   large (one realtime channel per active list is all we use), revisit channel
+   topology.
+4. **Code as secret** — list codes are bearer tokens; the 8-member cap (join RPC +
+   RLS policy) + rate limiting must hold (covered in §9).
 
 ---
 
