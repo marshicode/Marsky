@@ -63,6 +63,7 @@ export function ItemCard({
     return () => clearInterval(t);
   }, []);
   const state = dueState(item, now);
+  const done = item.completed ? doneLog(item, members) : [];
 
   const border =
     item.completed
@@ -179,24 +180,6 @@ export function ItemCard({
               <Avatar initials={initials(item.createdByName)} size="mini" color={memberOf(item.createdBy)?.color ?? "#78716C"} />
               <span>{item.createdByName} added</span>
             </span>
-            {item.completed && item.completedBy ? (
-              <>
-                <span className="text-[var(--line)]">·</span>
-                <span className="inline-flex h-6 items-center gap-1 font-bold text-ok">
-                  <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
-                  done by
-                </span>
-                {doneLog(item, members).map((d, i) => (
-                  <span key={i} className="inline-flex h-6 items-center gap-1.5">
-                    <Avatar size="mini" initials={initials(d.name)} color={d.color} />
-                    <span className="font-bold text-ok">{d.name}</span>
-                    <span className="rounded-full bg-[var(--ok-fill)] px-2 text-[11px] font-bold leading-[18px] text-ok">
-                      {fmtDoneAt(d.at)}
-                    </span>
-                  </span>
-                ))}
-              </>
-            ) : null}
             {dueBadge ? (
               <>
                 <span className="text-[var(--line)]">·</span>
@@ -269,6 +252,8 @@ export function ItemCard({
       </div>
 
       {/* comments (F9) */}
+
+      {/* comments (F9) */}
       {showComments && (
         <div className="mt-3.5 border-t border-line pt-3">
           {item.comments.map((c) => (
@@ -307,6 +292,30 @@ export function ItemCard({
               Send
             </button>
           </div>
+        </div>
+      )}
+      {/* done footer (F6) — full-width band flush with the card bottom,
+          so every completed card ends with the same aligned strip */}
+      {done.length > 0 && (
+        <div className="mt-3.5 -mx-4 -mb-4 flex items-center justify-between gap-2 rounded-b-[14px] border-t border-ok/15 bg-[var(--ok-fill)] py-1.5 pr-2 pl-4 text-[12px] font-bold text-ok">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <Check className="h-3 w-3 shrink-0" strokeWidth={3} aria-hidden="true" />
+            <span className="shrink-0">Done by</span>
+            {done.map((d, i) => (
+              <span key={i} className="inline-flex min-w-0 items-center gap-1">
+                {i > 0 && (
+                  <span aria-hidden="true" className="text-ok/50">
+                    ·
+                  </span>
+                )}
+                <Avatar size="mini" initials={initials(d.name)} color={d.color} />
+                <span className="truncate">{d.name}</span>
+              </span>
+            ))}
+          </div>
+          <span className="shrink-0 text-[11px] font-semibold opacity-70">
+            {fmtDoneAt(done[0].at)}
+          </span>
         </div>
       )}
       <style>{`@keyframes marskyPulse { 50% { box-shadow: 0 0 0 5px rgba(249,115,22,.2); } }`}</style>
