@@ -467,7 +467,7 @@ export default function PairListPage() {
 
       {/* Main column: the floating white canvas */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="mx-auto flex max-w-[1100px] flex-1 flex-col bg-canvas lg:my-5 lg:ml-5 lg:rounded-[26px] lg:shadow-[var(--shadow-canvas)]">
+        <div className="mx-auto flex w-full max-w-[1100px] flex-1 flex-col bg-canvas lg:my-5 lg:rounded-[26px] lg:shadow-[var(--shadow-canvas)]">
           <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-canvas/92 px-4 py-3 backdrop-blur-md sm:px-6 lg:rounded-t-[26px]">
             <div className="flex items-center gap-2 font-black text-brand-dark dark:text-brand-light lg:hidden">
               <Logo size={26} />
