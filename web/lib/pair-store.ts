@@ -19,9 +19,11 @@ import type {
 } from "./types";
 import { MAX_MEMBERS } from "./types";
 import { generateCode, pickColor, uid, uuid } from "./format";
+import { dbUpdatePair } from "./db";
 import {
   dbCreatePair,
   dbDeleteItem,
+  dbDeletePair,
   dbEnsureMember,
   dbFetchPair,
   dbFireReminders,
@@ -395,6 +397,7 @@ async function refreshFromDb(code: string) {
 export type PartnerEvent = {
   kind:
     | "added"
+    | "assigned"
     | "comment"
     | "completed"
     | "deleted"
@@ -472,6 +475,9 @@ function diffPartnerEvents(next: Pair): PartnerEvent[] {
       case "added":
         events.push({ kind: "added", ...base });
         break;
+      case "assigned":
+        events.push({ kind: "assigned", ...base });
+        break;
       case "commented":
         events.push({ kind: "comment", ...base });
         break;
@@ -511,13 +517,18 @@ function diffPartnerEvents(next: Pair): PartnerEvent[] {
 function adoptDbPair(pair: Pair) {
   const local = state.pairs[pair.code];
   pair.rev = Math.max(pair.rev ?? 0, local?.rev ?? 0, 1);
+  // A pre-migration DB has no sections column (fetched as empty); never let
+  // that wipe sub-lists created locally before 0004_sections.sql is applied.
+  if ((pair.sections?.length ?? 0) === 0 && (local?.sections?.length ?? 0) > 0) {
+    pair.sections = local.sections;
+  }
   state.pairs[pair.code] = pair;
   save();
   emit();
 }
 
 function itemToPatch(item: Item): ItemPatch {
-  return {
+  const patch: ItemPatch = {
     text: item.text,
     note: item.note ?? null,
     due_at: item.dueAt,
@@ -532,6 +543,11 @@ function itemToPatch(item: Item): ItemPatch {
     checkin: item.checkin,
     reminded: item.reminded,
   };
+  // Only send section/assignee when the item has one — pre-migration DBs
+  // reject the unknown column, which would break every item update.
+  if (item.section != null) patch.section = item.section;
+  if (item.assignee != null) patch.assignee = item.assignee;
+  return patch;
 }
 
 /** Diff-based background sync: after a mutation, push the touched items and
@@ -601,6 +617,7 @@ export function createPair(
     kind,
     createdAt: new Date().toISOString(),
     members: [{ id: user.id, name: user.name, color: user.color }],
+    sections: [],
     items: [],
     history: [],
     rev: 1,
@@ -736,6 +753,8 @@ export function addItem(
     recurring?: Item["recurring"];
     labels?: number[];
     pinned?: boolean;
+    section?: string;
+    assignee?: string | null;
     attachments?: Attachment[];
   }
 ): Item | null {
@@ -757,6 +776,8 @@ export function addItem(
       completedAt: null,
       labels: input.labels ?? [],
       pinned: input.pinned ?? false,
+      assignee: input.assignee ?? null,
+      section: input.section || undefined,
       attachments: input.attachments ?? [],
       comments: [],
       checkin: null,
@@ -764,6 +785,10 @@ export function addItem(
     };
     pair.items.push(item);
     pushHistory(pair, actor, "added", `“${item.text}”`);
+    if (item.assignee) {
+      const forWhom = pair.members.find((m) => m.id === item.assignee);
+      if (forWhom) pushHistory(pair, actor, "assigned", `“${item.text}” to ${forWhom.name}`);
+    }
     created = item;
   });
   return created;
@@ -774,15 +799,27 @@ export function updateItem(
   code: string,
   itemId: string,
   actor: Member,
-  patch: Partial<Pick<Item, "text" | "note" | "dueAt" | "recurring" | "labels">>
+  patch: Partial<Pick<Item, "text" | "note" | "dueAt" | "recurring" | "labels" | "assignee">>
 ) {
   mutate(code, (pair) => {
     const item = pair.items.find((i) => i.id === itemId);
     if (!item) return;
     const oldText = item.text;
+    const oldAssignee = item.assignee;
     Object.assign(item, patch);
     if (patch.text && patch.text.trim() && patch.text.trim() !== oldText) {
       pushHistory(pair, actor, "edited", `“${patch.text.trim().slice(0, 200)}”`);
+    }
+    if (patch.assignee !== undefined && patch.assignee !== oldAssignee) {
+      const forWhom = patch.assignee
+        ? pair.members.find((m) => m.id === patch.assignee)
+        : null;
+      pushHistory(
+        pair,
+        actor,
+        forWhom ? "assigned" : "edited",
+        forWhom ? `“${item.text}” to ${forWhom.name}` : `“${item.text}” — unassigned`
+      );
     }
   });
 }
@@ -794,6 +831,64 @@ export function deleteItem(code: string, itemId: string, actor: Member) {
     const [removed] = pair.items.splice(idx, 1);
     pushHistory(pair, actor, "deleted", `“${removed.text}”`);
   });
+}
+
+export const MAX_SECTIONS = 8;
+
+export type SectionError = "duplicate" | "limit" | "invalid";
+
+/** Named sub-list inside the same code — every member sees it with the code
+ *  they already have; no second join needed. */
+export function addSection(
+  code: string,
+  actor: Member,
+  rawName: string
+): { ok: true } | { ok: false; error: SectionError } {
+  const name = rawName.trim().slice(0, 24);
+  if (!name) return { ok: false, error: "invalid" };
+  const pair = state.pairs[code];
+  if (!pair) return { ok: false, error: "invalid" };
+  const sections = pair.sections ?? [];
+  if (sections.some((s) => s.toLowerCase() === name.toLowerCase()))
+    return { ok: false, error: "duplicate" };
+  if (sections.length >= MAX_SECTIONS) return { ok: false, error: "limit" };
+  mutate(code, (pair) => {
+    pair.sections = [...(pair.sections ?? []), name];
+    pushHistory(pair, actor, "created", `the “${name}” list`);
+  });
+  if (dbAvailable)
+    void dbUpdatePair(code, { sections: state.pairs[code]?.sections ?? [] }).then(handleWriteErr);
+  return { ok: true };
+}
+
+/** Removes a sub-list; its items fall back to the main list (nothing is
+ *  deleted). */
+export function removeSection(code: string, actor: Member, name: string) {
+  mutate(code, (pair) => {
+    if (!(pair.sections ?? []).includes(name)) return;
+    pair.sections = (pair.sections ?? []).filter((s) => s !== name);
+    for (const item of pair.items) if (item.section === name) delete item.section;
+    pushHistory(pair, actor, "deleted", `the “${name}” list`);
+  });
+  if (dbAvailable)
+    void dbUpdatePair(code, { sections: state.pairs[code]?.sections ?? [] }).then(handleWriteErr);
+}
+
+/** Permanently deletes an entire list for everyone. If it was the active
+ *  list, switches to another list the user belongs to (or clears it). */
+export function deletePair(targetCode: string): void {
+  if (!state.pairs[targetCode]) return;
+  delete state.pairs[targetCode];
+  if (state.activeCode === targetCode) {
+    const remaining = Object.values(state.pairs).filter((p) =>
+      p.members.some((m) => m.id === state.user?.id)
+    );
+    if (remaining[0]) setActiveCode(remaining[0].code);
+    else state.activeCode = null;
+  }
+  save();
+  emit();
+  if (dbAvailable) void dbDeletePair(targetCode).then(handleWriteErr);
 }
 
 /** F6 — toggle complete, handling recurring rollover (F8). */

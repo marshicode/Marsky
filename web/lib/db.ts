@@ -70,6 +70,7 @@ export interface DbPairRow {
   kind: string;
   created_at: string;
   rev: number;
+  sections?: unknown;
 }
 
 const toIso = (v: string | null) => (v ? new Date(v).toISOString() : null);
@@ -123,6 +124,8 @@ export async function dbFetchPair(code: string): Promise<{ ok: true; pair: Pair 
     completedAt: r.completed_at ? toIso(r.completed_at as string) : null,
     labels: Array.isArray(r.labels) ? (r.labels as number[]) : [],
     pinned: Boolean(r.pinned),
+    assignee: r.assignee ? String(r.assignee) : null,
+    section: (r.section as string | null) ?? undefined,
     attachments: (r.attachments as Pair["items"][number]["attachments"]) ?? [],
     comments: (r.comments as Pair["items"][number]["comments"]) ?? [],
     checkin: (r.checkin as Pair["items"][number]["checkin"]) ?? null,
@@ -145,10 +148,11 @@ export async function dbFetchPair(code: string): Promise<{ ok: true; pair: Pair 
     pair: {
       code: pairRow.code,
       name: pairRow.name,
-      kind: pairRow.kind === "group" ? "group" : "pair",
-      createdAt: toIso(pairRow.created_at) ?? new Date().toISOString(),
-      members,
-      items,
+    kind: pairRow.kind === "group" ? "group" : "pair",
+    createdAt: toIso(pairRow.created_at) ?? new Date().toISOString(),
+    members,
+    sections: Array.isArray(pairRow.sections) ? (pairRow.sections as string[]) : [],
+    items,
       history,
       rev: pairRow.rev,
     },
@@ -172,6 +176,7 @@ export async function dbCreatePair(
     name: name.slice(0, 40),
     kind,
     rev: 1,
+    sections: [],
   });
   if (e1) return { ok: false, error: e1 };
   const { error: e2 } = await supabase.from("pair_members").insert({
@@ -252,6 +257,26 @@ export async function dbPushHistory(
 
 /** ---------- item writes (full-row JSON for jsonb columns) ---------- */
 
+/** Deletes an entire list — items, history and members are removed by the
+ *  pairs FK's ON DELETE CASCADE. Requires the 0005_list_deletes.sql policy. */
+export async function dbDeletePair(
+  code: string
+): Promise<{ ok: boolean; error?: unknown }> {
+  const supabase = getClient();
+  const { error } = await supabase.from("pairs").delete().eq("code", code);
+  return { ok: !error, error };
+}
+
+/** Pair-level patch (sub-list sections). Caller must be a pair member (RLS). */
+export async function dbUpdatePair(
+  code: string,
+  patch: { sections?: string[] }
+): Promise<{ ok: boolean; error?: unknown }> {
+  const supabase = getClient();
+  const { error } = await supabase.from("pairs").update(patch).eq("code", code);
+  return { ok: !error, error };
+}
+
 export type ItemPatch = Partial<{
   text: string;
   note: string | null;
@@ -262,6 +287,8 @@ export type ItemPatch = Partial<{
   completed_at: string | null;
   labels: number[];
   pinned: boolean;
+  assignee: string | null;
+  section: string | null;
   attachments: unknown;
   comments: unknown;
   checkin: unknown;
@@ -273,7 +300,9 @@ export async function dbInsertItem(
   item: Pair["items"][number]
 ): Promise<{ ok: boolean; error?: unknown }> {
   const supabase = getClient();
-  const { error } = await supabase.from("items").insert({
+  // `section` is only sent when set: DBs without 0004_sections.sql applied
+  // reject unknown columns, which would break ALL item inserts.
+  const payload: Record<string, unknown> = {
     id: item.id,
     pair_code: code,
     text: item.text.slice(0, 200),
@@ -291,7 +320,12 @@ export async function dbInsertItem(
     comments: item.comments,
     checkin: item.checkin,
     reminded: item.reminded,
-  });
+  };
+  if (item.section != null) payload.section = item.section;
+  // Same guarded-column pattern as `section`: only sent when set, so DBs
+  // without 0006_assignment.sql applied still accept every other insert.
+  if (item.assignee != null) payload.assignee = item.assignee;
+  const { error } = await supabase.from("items").insert(payload);
   return { ok: !error, error };
 }
 

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Link2, MoreHorizontal, Paperclip, X } from "lucide-react";
-import type { Attachment, Item } from "@/lib/types";
+import type { Attachment, Item, Member } from "@/lib/types";
 import { LABELS } from "@/lib/types";
 import { toLocalInput, uid } from "@/lib/format";
 import { toast } from "@/components/toast";
@@ -13,6 +13,7 @@ export interface ComposeInput {
   dueAt: string | null;
   recurring: Item["recurring"];
   labels: number[];
+  assignee?: string | null;
   attachments: Attachment[];
 }
 
@@ -36,10 +37,12 @@ function yearWarning(value: string): string | null {
 
 export function ComposeBar({
   editing,
+  members,
   onSubmit,
   onCancel,
 }: {
   editing: Item | null;
+  members: Member[];
   onSubmit: (input: ComposeInput) => void;
   onCancel: () => void;
 }) {
@@ -55,6 +58,7 @@ export function ComposeBar({
     editing?.recurring ?? null
   );
   const [labels, setLabels] = useState<number[]>(editing?.labels ?? []);
+  const [assignee, setAssignee] = useState<string | null>(editing?.assignee ?? null);
   const [attachments, setAttachments] = useState<Attachment[]>(
     editing?.attachments ?? []
   );
@@ -91,6 +95,7 @@ export function ComposeBar({
       dueAt: due ? new Date(due).toISOString() : null,
       recurring,
       labels,
+      assignee,
       attachments,
     });
     setText("");
@@ -98,6 +103,7 @@ export function ComposeBar({
     setDue("");
     setRecurring(null);
     setLabels([]);
+    setAssignee(null);
     setAttachments([]);
     setDueError("");
   };
@@ -216,6 +222,23 @@ export function ComposeBar({
                 <option value="">Never</option>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
+              </select>
+            </div>
+            <div className="min-w-[150px]">
+              <label className="mb-1.5 block text-[11.5px] font-bold uppercase tracking-[.6px] text-ink-soft">
+                Assign to
+              </label>
+              <select
+                value={assignee ?? ""}
+                onChange={(e) => setAssignee(e.target.value || null)}
+                className="w-full rounded-[10px] border-[1.5px] border-transparent bg-canvas-2 px-3 py-2 text-[14px] outline-none focus:border-brand"
+              >
+                <option value="">Anyone</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

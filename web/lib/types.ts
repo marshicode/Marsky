@@ -51,6 +51,10 @@ export interface Item {
   completedLog?: Record<string, string> | null;
   labels: number[];
   pinned: boolean;
+  /** Member id this task is for; null/undefined = anyone on the list. */
+  assignee?: string | null;
+  /** Named sub-list inside the same code ("Dinner list"); undefined = main. */
+  section?: string;
   attachments: Attachment[];
   comments: Comment[];
   /** Set when the reminder has fired; cleared on snooze/recurring rollover. */
@@ -74,6 +78,8 @@ export interface Pair {
   kind: ListKind;
   createdAt: string;
   members: Member[];
+  /** Named sub-lists sharing this code; every member sees them all. */
+  sections: string[];
   items: Item[];
   history: HistoryEntry[];
   /** Monotonic revision: broadcast/write sync only accepts newer copies. */

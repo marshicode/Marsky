@@ -51,7 +51,7 @@ type Note = {
   g?: number;
 };
 
-const PATTERNS: Record<"due" | "comment" | "added", Note[]> = {
+const PATTERNS: Record<"due" | "comment" | "added" | "party", Note[]> = {
   // Reminder due: three rising chimes — the "pay attention" voice.
   due: [
     { f: 660, t: 0, d: 0.16, type: "triangle", g: 0.14 },
@@ -64,6 +64,13 @@ const PATTERNS: Record<"due" | "comment" | "added", Note[]> = {
   added: [
     { f: 523, t: 0, d: 0.12, type: "sine", g: 0.12 },
     { f: 784, t: 0.11, d: 0.18, type: "sine", g: 0.12 },
+  ],
+  // Everything on the list is done: a tiny major fanfare.
+  party: [
+    { f: 523, t: 0, d: 0.14, type: "triangle", g: 0.13 },
+    { f: 659, t: 0.13, d: 0.14, type: "triangle", g: 0.13 },
+    { f: 784, t: 0.26, d: 0.14, type: "triangle", g: 0.13 },
+    { f: 1047, t: 0.39, d: 0.42, type: "triangle", g: 0.15 },
   ],
 };
 

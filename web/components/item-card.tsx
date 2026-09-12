@@ -77,6 +77,7 @@ export function ItemCard({
   }, []);
   const state = dueState(item, now);
   const done = item.completed ? doneLog(item, members) : [];
+  const assignee = item.assignee ? memberOf(item.assignee) : null;
 
   const border =
     item.completed
@@ -205,6 +206,16 @@ export function ItemCard({
                 {item.recurring === "daily" ? "daily" : "weekly"}
               </span>
             ) : null}
+            {assignee ? (
+              <span className="inline-flex h-6 items-center gap-1 rounded-full border-[1.5px] border-line bg-bg px-2 text-[11px] font-bold text-ink-soft">
+                <Avatar
+                  size="mini"
+                  initials={initials(assignee.name)}
+                  color={assignee.color}
+                />
+                for {assignee.name}
+              </span>
+            ) : null}
             {item.labels.map((id) => {
               const label = LABELS.find((l) => l.id === id);
               if (!label) return null;
@@ -218,6 +229,11 @@ export function ItemCard({
                 </span>
               );
             })}
+            {item.section ? (
+              <span className="inline-flex h-6 items-center rounded-full border-[1.5px] border-line bg-bg px-2.5 text-[11px] font-bold text-ink-soft">
+                {item.section}
+              </span>
+            ) : null}
             {item.comments.length > 0 && (
               <span className="inline-flex h-6 items-center gap-1">
                 <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
