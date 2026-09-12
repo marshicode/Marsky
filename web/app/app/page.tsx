@@ -57,6 +57,9 @@ export default function PairListPage() {
   const [editing, setEditing] = useState<Item | null>(null);
   const [notifsOpen, setNotifsOpen] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
+  // Which card's comment section is expanded — one at a time, so opening one
+  // card never leaves another card's comments hanging open.
+  const [openCommentsId, setOpenCommentsId] = useState<string | null>(null);
   // Hydration gate: the server prerenders this page empty (no localStorage),
   // so the client must agree on that first render — otherwise React logs a
   // hydration mismatch every time a returning user loads /app. After the
@@ -664,9 +667,12 @@ export default function PairListPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          /* Masonry via CSS columns: cards pack into columns with no row
+             alignment, so a card growing (comments open) never leaves gaps
+             next to its neighbors. */
+          <div className="columns-1 gap-3 sm:columns-2 xl:columns-3">
             {items.map((item) => (
-              <div key={item.id} id={item.id} className="min-w-0">
+              <div key={item.id} id={item.id} className="mb-3 min-w-0 break-inside-avoid">
                 <ItemCard
                   item={item}
                   members={pair.members}
@@ -679,6 +685,10 @@ export default function PairListPage() {
                     document.getElementById("compose-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
                   onDelete={() => setModal({ kind: "delete", itemId: item.id })}
+                  commentsOpen={openCommentsId === item.id}
+                  onToggleComments={() =>
+                    setOpenCommentsId(openCommentsId === item.id ? null : item.id)
+                  }
                 />
               </div>
             ))}

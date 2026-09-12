@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Check,
   Clock,
@@ -44,6 +44,8 @@ export function ItemCard({
   onTogglePin,
   onEdit,
   onDelete,
+  commentsOpen,
+  onToggleComments,
 }: {
   item: Item;
   members: Member[];
@@ -53,10 +55,21 @@ export function ItemCard({
   onTogglePin: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  /** Controlled so the list can keep just one card's comments open at a time. */
+  commentsOpen: boolean;
+  onToggleComments: () => void;
 }) {
   const memberOf = (id: string) => members.find((m) => m.id === id);
-  const [showComments, setShowComments] = useState(false);
   const [draft, setDraft] = useState("");
+  const showComments = commentsOpen;
+  const setShowComments = (open: boolean) => {
+    if (open !== showComments) onToggleComments();
+  };
+  const commentsBoxRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (showComments && commentsBoxRef.current)
+      commentsBoxRef.current.scrollTop = commentsBoxRef.current.scrollHeight;
+  }, [showComments, item.comments.length]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30_000);
@@ -216,9 +229,11 @@ export function ItemCard({
 
         {/* actions */}
         <div className="-mr-1.5 -mt-1 flex shrink-0 items-center gap-0.5">
-          <button
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-canvas-2"
-              onClick={() => setShowComments((s) => !s)}
+            <button
+              className={`flex h-7 w-7 items-center justify-center rounded-lg text-ink-soft transition-colors hover:bg-canvas-2 ${
+                showComments ? "text-brand" : ""
+              }`}
+              onClick={() => setShowComments(!showComments)}
               aria-label="Comments"
               aria-expanded={showComments}
             >
@@ -251,21 +266,35 @@ export function ItemCard({
         </div>
       </div>
 
-      {/* comments (F9) */}
-
-      {/* comments (F9) */}
+      {/* comments (F9) — capped-height scroll box so a long thread never
+          stretches the card; opens scrolled to the newest comment */}
       {showComments && (
         <div className="mt-3.5 border-t border-line pt-3">
-          {item.comments.map((c) => (
-            <div key={c.id} className="mb-2 flex gap-2 text-[13.5px]">
-              <Avatar initials={initials(c.authorName)} size="sm" color={memberOf(c.authorId)?.color ?? "#78716C"} />
-              <div className="rounded-[10px] bg-canvas-2 px-2.5 py-1.5">
-                <span className="mr-1.5 text-[12px] font-bold">{c.authorName}</span>
-                <span className="text-[11px] text-ink-faint">{timeAgo(c.at)}</span>
-                <div className="break-words">{c.text}</div>
-              </div>
+          {item.comments.length > 0 && (
+            <div className="mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-ink-faint">
+              <MessageCircle className="h-3 w-3" aria-hidden="true" />
+              {item.comments.length} {item.comments.length === 1 ? "comment" : "comments"}
             </div>
-          ))}
+          )}
+          <div
+            ref={commentsBoxRef}
+            className={`min-h-0 overflow-y-auto ${item.comments.length > 3 ? "max-h-[180px] pr-0.5" : ""}`}
+          >
+            {item.comments.length === 0 ? (
+              <p className="mb-1.5 text-[12px] text-ink-faint">No comments yet — say something…</p>
+            ) : (
+              item.comments.map((c) => (
+                <div key={c.id} className="mb-2 flex gap-2 text-[13.5px]">
+                  <Avatar initials={initials(c.authorName)} size="sm" color={memberOf(c.authorId)?.color ?? "#78716C"} />
+                  <div className="min-w-0 flex-1 rounded-[10px] bg-canvas-2 px-2.5 py-1.5">
+                    <span className="mr-1.5 text-[12px] font-bold">{c.authorName}</span>
+                    <span className="text-[11px] text-ink-faint">{timeAgo(c.at)}</span>
+                    <div className="whitespace-pre-wrap break-words">{c.text}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
           <div className="mt-1 flex gap-1.5">
             <input
               value={draft}
